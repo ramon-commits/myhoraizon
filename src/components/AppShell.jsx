@@ -1,7 +1,7 @@
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { LayoutDashboard, FileSignature, Receipt, ClipboardList, LogOut, MessageCircle } from 'lucide-react'
+import { LayoutDashboard, FileSignature, Receipt, ClipboardList, LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
-import { useState } from 'react'
+import IrisChatPanel from './IrisChatPanel'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -76,53 +76,7 @@ export default function AppShell() {
         <Outlet />
       </main>
 
-      <IrisWidget />
+      <IrisChatPanel />
     </div>
-  )
-}
-
-// Iris-widget — placeholder voor F4.5 / WhatsApp-koppeling. Voor nu een
-// floating bubble rechtsonder die opent met een teaser-bericht.
-function IrisWidget() {
-  const [open, setOpen] = useState(false)
-  return (
-    <>
-      <button
-        onClick={() => setOpen((o) => !o)}
-        title="Vraag het Iris"
-        style={{
-          position: 'fixed', bottom: 22, right: 22,
-          width: 56, height: 56, borderRadius: '50%',
-          background: 'linear-gradient(135deg, var(--color-kyano), var(--color-aqua-deep))',
-          border: 'none', color: '#fff', cursor: 'pointer',
-          boxShadow: '0 8px 24px rgba(79,184,178,0.40)',
-          display: 'grid', placeItems: 'center', zIndex: 50,
-        }}
-      >
-        <MessageCircle size={22} />
-      </button>
-      {open && (
-        <div style={{
-          position: 'fixed', bottom: 90, right: 22,
-          width: 320, padding: 18, borderRadius: 14,
-          background: '#fff', border: '1px solid var(--color-line-hi)',
-          boxShadow: '0 16px 40px rgba(14,20,48,0.16)', zIndex: 50,
-        }}>
-          <div style={{ fontSize: 11, color: 'var(--color-kyano)', letterSpacing: '0.16em', textTransform: 'uppercase', fontWeight: 700 }}>
-            Iris
-          </div>
-          <div style={{ marginTop: 8, font: '700 18px/1.2 var(--font-display)', letterSpacing: '-0.02em' }}>
-            Hoi, ik kom <span className="italic-accent">eraan.</span>
-          </div>
-          <p style={{ marginTop: 10, fontSize: 13.5, color: 'var(--color-ink-soft)', lineHeight: 1.5 }}>
-            Mijn chat-knop is bijna klaar. Stuur nu nog een mail of WhatsApp naar Ramon op{' '}
-            <a href="mailto:ramon@endlessminds.nl" style={{ color: 'var(--color-kyano)' }}>ramon@endlessminds.nl</a>.
-          </p>
-          <div style={{ marginTop: 14, fontSize: 11, color: 'var(--color-ink-dim)' }}>
-            Comt live in Fase 3 — directe chat met de directiesecretaresse.
-          </div>
-        </div>
-      )}
-    </>
   )
 }
