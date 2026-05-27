@@ -11,7 +11,7 @@ export function useIrisChat() {
   const [loading, setLoading] = useState(false)
   const [sending, setSending] = useState(false)
   const [err, setErr] = useState(null)
-  const [meta, setMeta] = useState(null) // { company, name, open_invoice, signed_contract }
+  const [meta, setMeta] = useState(null) // { company, name, first_name, open_invoice, signed_contract }
   const loadedRef = useRef(false)
 
   const fetchToken = useCallback(async () => {
@@ -46,7 +46,7 @@ export function useIrisChat() {
       const r = await call({ load_history: true })
       const conv = Array.isArray(r.conversation) ? r.conversation : []
       setMessages(conv.map((m) => ({ role: m.role, content: m.content, at: m.at })))
-      setMeta({ company: r.company, name: r.name })
+      setMeta({ company: r.company, name: r.name, first_name: r.first_name })
     } catch (e) {
       setErr(e.message)
     } finally {

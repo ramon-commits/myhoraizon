@@ -73,7 +73,7 @@ export default function IrisChatPanel() {
                 Chat met Iris
               </div>
               <div style={{ font: '700 16px/1.15 var(--font-display)', letterSpacing: '-0.02em', marginTop: 2 }}>
-                {meta?.company ? <>Hoi <span className="italic-accent">{meta.company.split(' ')[0]}.</span></> : 'Een moment.'}
+                {meta?.first_name ? <>Hoi <span className="italic-accent">{meta.first_name}.</span></> : 'Een moment.'}
               </div>
             </div>
             <button onClick={() => setOpen(false)} aria-label="Sluiten" style={closeButtonStyle}>
@@ -147,11 +147,14 @@ export default function IrisChatPanel() {
   )
 }
 
-function Welcome({ meta, pathname, navigate }) {
+function Welcome({ meta }) {
+  const naam = meta?.first_name || 'daar'
+  const bedrijf = meta?.company
   return (
     <div style={{ padding: 12, borderRadius: 12, background: 'rgba(79,184,178,0.08)', border: '1px solid rgba(79,184,178,0.25)' }}>
       <div style={{ fontSize: 13.5, color: 'var(--color-ink)', lineHeight: 1.5 }}>
-        {meta?.name ? `Hoi ${String(meta.name).split(' ')[0]},` : 'Hoi,'} ik ben Iris. Vraag me iets over je offertes, contracten of facturen.
+        Hoi {naam}, welkom op je dashboard{bedrijf ? ` voor ${bedrijf}` : ''}.
+        Vraag me alles over je offertes, contracten of facturen.
         {meta?.open_invoice && (
           <> Je hebt overigens een <strong>openstaande factuur</strong>, wil je de betaalgegevens zien?</>
         )}
