@@ -4,6 +4,54 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 8: De Inbox-module uit de blauwdruk (2026-06-28)
+
+### Wat gebouwd
+Route `/postvak` (sidebar "Inbox") + alias `/inbox`: het postvak uit de blauwdruk
+(05-inbox), op demo-gesprekken uit data.js. Lijst-modus (kanaalfilters + views +
+gesprek-rijen met inline acties) en full-screen thread (AI-samenvatting, berichten
+met bijlagen/spraak, composer met Sam-suggestie/Verbeter-NL/Vertaal/AI-varianten/
+templates) + het contactpaneel (klantkaart naast het gesprek).
+
+### Hergebruikt (gedeelde componenten, golden rule)
+ObjectActions (aanmaken/toewijzen/klant), assign.jsx (currentActor/asgFirst/
+logToCustomer), store.jsx, components.jsx (Avatar/AC/ACsoft), icons.js, menus.jsx
+(useSmartMenu), dashboard.jsx (clientFirst), blueprint.css (alle hub-/irow-/cp-/
+comp-klassen stonden er al).
+
+### Nieuw als gedeelde laag (eerst gebouwd)
+- `channels.jsx` — kanaal-adapter (CH_META/CH_LOGO/ChannelAvatar) + tenant-config-
+  seam (`INBOX_TENANT`: kanalen aan/uit per tenant). UI leest kanalen hieruit, niet
+  hardcoded → de echte comms-engine klikt later vast.
+- `customers.js` — de **gedeelde klant-bron** `allCustomers(store)` (in CRM
+  aangemaakte klanten + demo-seed). CRM/Relatiebeheer hergebruiken deze later.
+- `inbox.jsx` — CommHub + ContactPanel + ComposeModal + SnoozeModal + thread/lijst.
+
+### Bewuste keuzes / beperkingen
+- "Aanmaken vanuit gesprek" loopt via **ObjectActions** (Naar Vandaag / Wijs toe /
+  Ga naar klant), niet via de blauwdruk-`QuickCreateModal` (jouw instructie: geen
+  tweede create-mechanisme; QuickCreate hing bovendien aan nog-niet-gebouwde
+  sales/offerte-engines).
+- De **volledige** CRM-klantkaart (`crm.full`) bestaat nog niet → "Volledige
+  klantkaart openen" zet de state maar toont nog niets; de klantkaart-naast-het-
+  gesprek (ContactPanel, mini-context met gekoppelde deal/offerte) werkt wél.
+- De CRM-`FieldPicker` (Knoppen/Velden-config) komt met de CRM-module; de knoppen
+  staan er, de picker-popover volgt dan (lokale `useFieldPop` zodat de knop werkt).
+- Alles op demo-data; echte kanalen/Supabase later.
+
+### Bestanden
+- Nieuw: `src/design/{channels.jsx,customers.js,inbox.jsx}`, `src/pages/InboxPage.jsx`.
+- Gewijzigd: `src/App.jsx` (routes /postvak + /inbox).
+
+### Getest
+- `npm run build` slaagt, `npm run lint` exit 0 (3 faithful-port waarschuwingen).
+- Headless screenshots: lijst (kanaal-chips, rijen, tags) + thread (AI-samenvatting,
+  composer, statusbalk met ObjectActions, contactpaneel met gekoppelde deal/offerte).
+
+### Status: klaar, wacht op visuele vergelijking met de Design
+
+---
+
 ## Stap 7: De Vandaag-module uit de blauwdruk (2026-06-28)
 
 ### Wat gedaan
