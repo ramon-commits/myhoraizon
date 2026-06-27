@@ -3,6 +3,7 @@ import { LogOut } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { NAV_GROUPS } from '../nav'
 import IrisChatPanel from './IrisChatPanel'
+import { ToastHost, ConfirmHost } from '../design/store.jsx'
 
 export default function AppShell() {
   const { email, signOut } = useAuth()
@@ -79,6 +80,8 @@ export default function AppShell() {
       </main>
 
       <IrisChatPanel />
+      <ToastHost />
+      <ConfirmHost />
     </div>
   )
 }

@@ -1,7 +1,5 @@
-@import "tailwindcss";
-
 /* Kyano-design tokens — sync met horaizon-brain/src/components/discovery/tokens.js */
-@theme {
+:root {
   --color-bg: #FAFAFB;
   --color-cream: #F4F2EE;
   --color-ink: #0E1430;

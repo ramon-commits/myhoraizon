@@ -4,6 +4,57 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 4: Ring-fix (Tailwind weg) + DashboardPage omgezet naar blauwdruk (2026-06-27)
+
+### Wat gedaan
+**1. Ring-kader-bug opgelost (rootcause).** Het zwarte kadertje rond de Ring
+("72% klaar") kwam doordat `className="ring"` botste met Tailwind v4's
+`ring`-utility: Tailwind detecteerde de class-naam en genereerde
+`.ring{box-shadow:...}` over de blauwdruk-`.ring` heen. De app gebruikt geen
+Tailwind-utilities (alleen inline-stijlen + blauwdruk-CSS), dus Tailwind is
+volledig verwijderd: plugin uit `vite.config.js`, `@import "tailwindcss"` uit
+`index.css`, en `@theme {` → `:root {` (tokens blijven werken). Dit voorkomt
+ook toekomstige botsingen (grid/flex/block/...) met blauwdruk-classes.
+Geverifieerd met een headless screenshot: kader weg.
+
+**2. DashboardPage = de dashboard-content uit de blauwdruk** (op demo-data uit
+data.js, echte koppeling later). Nieuw `src/design/dashboard.jsx` met de blokken,
+markup 1:1 met de blauwdruk:
+- Greeting: "Hoi <em>Ramon</em>, welkom terug".
+- KPI-strip met de vier kaarten (Openstaande taken, Omzet deze maand, Open
+  pipeline, Nieuwe leads) via de gedeelde `KpiStrip` + `kpiDefault`.
+- Vandaag-blok "Wat er op je wacht": taak-rijen (CeoProposal, getrimd) met
+  agent-avatar, module-chip, samenvatting en acties (Keur goed / Later /
+  Afwijzen), incl. urgent-vlag.
+- Agenda-tijdlijn "Je dag" met gekleurde afspraken.
+- Iris-blok "Voorstellen" met de voorstel-kaarten.
+Layout via de blauwdruk-classes `dash` / `dash-2col` / `dash-left` en de
+gedeelde `Panel`. `ToastHost`/`ConfirmHost` globaal in `AppShell` gezet zodat
+de acties toasts tonen.
+
+### Bestanden
+- Nieuw: `src/design/dashboard.jsx`.
+- Gewijzigd: `src/pages/DashboardPage.jsx` (Supabase-versie vervangen door
+  blauwdruk-dashboard), `src/components/AppShell.jsx` (ToastHost/ConfirmHost),
+  `vite.config.js` (Tailwind-plugin weg), `src/index.css` (Tailwind weg, @theme
+  → :root), `src/pages/DesignCheckPage.jsx` (debug-style verwijderd).
+
+### Getest
+- `npm run build`: slaagt. `npm run lint`: exit 0 (alleen de bekende
+  faithful-port waarschuwing in `Panel`).
+- Headless screenshots: Ring zonder kader; dashboard rendert volledig
+  (groet + 4 KPI's + Vandaag-rijen + agenda + Iris-voorstellen).
+
+### Status: klaar, wacht op visuele vergelijking met de Design
+
+### Let op
+- Dashboard draait op demo-data (`data.js`); Supabase-koppeling volgt.
+- Het is de dashboard-CONTENT met de gedeelde `Panel`-kaarten, nog niet het
+  sleepbare tegelgrid uit de blauwdruk (drag/resize/widget-markt). Laat weten
+  als je die tegel-laag er ook op wilt.
+
+---
+
 ## Stap 3: Design-blauwdruk vastgelegd + fundament-lagen omgezet (2026-06-27)
 
 ### Wat gedaan
