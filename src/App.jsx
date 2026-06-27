@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppShell from './components/AppShell'
+import PlaceholderPage from './components/PlaceholderPage'
+import { PLACEHOLDER_ITEMS } from './nav'
 
 import LoginPage from './pages/LoginPage'
 import AuthCallback from './pages/AuthCallback'
@@ -45,6 +47,15 @@ export default function App() {
               <Route path="contracten/:id" element={<ContractDetailPage />} />
               <Route path="facturen" element={<InvoicesListPage />} />
               <Route path="facturen/:id" element={<InvoiceDetailPage />} />
+
+              {PLACEHOLDER_ITEMS.map((it) => (
+                <Route
+                  key={it.to}
+                  path={it.to.slice(1)}
+                  element={<PlaceholderPage title={it.label} />}
+                />
+              ))}
+
               <Route path="*" element={<Navigate to="/" replace />} />
             </Route>
           </Routes>
