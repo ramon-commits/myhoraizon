@@ -4,6 +4,46 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 5a: Nieuwe bronnen vastgelegd + analyse (2026-06-27)
+
+### Wat gedaan
+Drie bronnen ontvangen; doel vastgesteld: **alles uit de Claude Design-prototype
+exact omzetten naar myhoraizon (alle modules/elementen)**, plus officiële
+merk-iconen integreren.
+
+- **Officiële merk-iconen** (`horaizon-icons 2/`, 21 SVG-marks in kleurvarianten)
+  vastgelegd in `design-ref/brand-icons/` en als assets in `public/brand/`.
+  Worden in de shell-stap aan `HoraizonLogo`/`KyanoMark` gekoppeld.
+- **`Discovery chart (24).zip`**: de `Klant-dashboard.html` is **identiek** aan de
+  huidige blauwdruk (dashboard-design ongewijzigd). Bevat daarnaast een echte
+  (deel-)codebase `client/src/` (vastgelegd in `design-ref/client-src/`).
+- **Analyse `client/src`**: dit is een APARTE, echte productie-app (inbox/CRM:
+  Inbox, Conversation, Contacten, Calendar, Social, Projecten, Instellingen) met
+  eigen backend (`lib/api.js`, `/messages/...`), React-Query-hooks en
+  Tailwind-utilities. Het is NIET de design-prototype die we porten, maar een
+  referentie (vermoedelijk de echte inbox-backend om later op aan te sluiten).
+
+### Bestanden
+- Nieuw (gecommit): `public/brand/*.svg` (21 merk-marks).
+- Nieuw (gitignored, referentie): `design-ref/brand-icons/`, `design-ref/client-src/`.
+
+### Status: referentie vastgelegd. Volgende: shell-stap (zie roadmap onder).
+
+### Roadmap "alles exact omzetten"
+- [x] 1-2 sidebar-structuur + gedeelde ListRow
+- [x] 3 fundament-lagen (components/menus/objectactions/tokens)
+- [x] 4 dashboard-content (groet + KPI + Vandaag + agenda + Iris)
+- [ ] 5 de shell exact: gegroepeerde sidebar (card-groepen) + topbar (zoek /
+      notificaties / account / nieuw) + officiële merk-iconen
+- [ ] 6 sleepbare tegel-laag (tiles.jsx) zodat dashboard 1:1 is
+- [ ] 7+ modules één voor één uit de blauwdruk (Vandaag, Inbox, Agenda,
+      Sales-suite, Offertes/Facturen/Contracten/Documenten, Website-suite,
+      Analytics, Team, Iris, Beheer, ...) + benodigde gedeelde lagen
+      (assign, widgets, altviews)
+- [ ] daarna: echte data-koppeling (Supabase) per module
+
+---
+
 ## Stap 4: Ring-fix (Tailwind weg) + DashboardPage omgezet naar blauwdruk (2026-06-27)
 
 ### Wat gedaan
