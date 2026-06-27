@@ -4,6 +4,56 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 7: De Vandaag-module uit de blauwdruk (2026-06-28)
+
+### Wat gedaan
+De Vandaag-pagina (`/vandaag`) is nu het volledige Vandaag-bord uit de blauwdruk
+(pages.jsx), op demo-data. Eerst de benodigde gedeelde lagen geport:
+- **`src/design/assign.jsx`** — het gedeelde toewijs-systeem: `AssignAction`
+  (met cascade-recht via rollen), `TeamPicker`, `TeamAssignedSection` ("Aan mij
+  toegewezen" + "Bij het team" met teruggeven/terugzetten), `ReturnedBanner`,
+  `OwnerField`, en de helpers (currentActor, canAssign, isAssigned, logToMember/
+  logToCustomer, werkstroom-filter). `objectactions.jsx` gebruikt nu de echte
+  `AssignAction` (geen window-bridge meer).
+- **`src/design/snooze.jsx`** — `SnoozeMenu` (uitstel-opties) voor de "Later"-actie.
+- **`src/design/takenlog.jsx`** — `TakenLogWidget`: centrale samengevoegde
+  takenlijst (agent + eigen + toegewezen) met status-chips, zoek en filters.
+- **`src/design/vandaag.jsx`** — `CeoProposal` (agent-taak-rij: avatar,
+  module-chip, titel, meta, uitklapbare samenvatting met Keur goed / Bekijk /
+  Later / Afwijzen + ObjectActions/AssignAction), `VoorstellenWidget` (de
+  taken-lijst met filter/sorteer + groepering urgent/module + TeamAssignedSection
+  + eigen taken), `UserTaskRow`/`QuickAddTask`/`UTaskLinkMenu` (eigen taken),
+  `VandaagBoardHeader` (groet + commandoregel + voortgang + Alles afhandelen),
+  `SnelleActiesWidget`.
+
+### Bedrading
+- De shell beheert nu de layout per BOARD (dashboard én vandaag); `BOARDS`
+  geëxporteerd uit tiles.jsx, AppShell kiest het bord op basis van de route.
+- Nieuwe route `/vandaag` -> `VandaagPage` (VandaagBoardHeader + TileGrid
+  board="vandaag" met de Taken-/KPI-/Agenda-/Snelle-acties-/Taken-log-tegels).
+- tiles.jsx koppelt nu de echte `VoorstellenWidget`/`SnelleActiesWidget`/
+  `TakenLogWidget` (i.p.v. window-stubs).
+
+### Bestanden
+- Nieuw: `src/design/{assign,snooze,takenlog,vandaag}.jsx`, `src/pages/VandaagPage.jsx`.
+- Gewijzigd: `src/design/{objectactions,tiles,shell}.jsx`,
+  `src/components/AppShell.jsx`, `src/pages/DashboardPage.jsx`, `src/App.jsx`.
+
+### Getest
+- `npm run build` slaagt, `npm run lint` exit 0 (3 faithful-port waarschuwingen).
+- Headless screenshot van `/vandaag`: bordkop ("Goedenacht, Ramon · 31 taken"),
+  de Taken-tegel met "Vraagt nu je aandacht (5)" + "Taken (26)", elke rij met
+  agent-avatar, module-chip, titel, meta en Bekijk.
+
+### Status: klaar, wacht op visuele vergelijking met de Design
+
+### Let op
+- `allCustomers` (klant-koppeling vanuit een taak) is nog niet geport (komt met de
+  CRM/Sales-module); klant-links degraderen netjes tot dan.
+- Alles draait op demo-data (`data.js`); Supabase-koppeling volgt.
+
+---
+
 ## Stap 6: De sleepbare tegel-laag uit de blauwdruk (2026-06-28)
 
 ### Wat gedaan

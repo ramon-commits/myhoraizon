@@ -282,9 +282,8 @@ function AccountMenu({ go, onLogout }) {
   )
 }
 
-export function TopBar({ view, go, edit, setEdit, onReset, openLib, flags, onLogout }) {
+export function TopBar({ view, go, edit, setEdit, onReset, openLib, flags, onLogout, isBoard }) {
   const crumb = view === 'dashboard' ? 'Dashboard' : view === 'iris' ? 'Iris' : view === 'settings' ? 'Beheer' : (MOD[view] ? MOD[view].name : view)
-  const isBoard = view === 'dashboard'
   return (
     <header className="topbar">
       <div className="tb-left">

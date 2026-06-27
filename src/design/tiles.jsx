@@ -10,6 +10,8 @@ import { useSmartMenu } from './menus'
 import { WidgetChart, syncedNums, monthSeries, secondAccent } from './charts.jsx'
 import { CompactView, DayView, WeekView, AgentStatusView, ChannelVolView } from './altviews.jsx'
 import { IrisVoorstellen } from './dashboard.jsx'
+import { VoorstellenWidget, SnelleActiesWidget } from './vandaag.jsx'
+import { TakenLogWidget } from './takenlog.jsx'
 
 const { useState, useRef, useEffect, useCallback } = React
 
@@ -289,13 +291,13 @@ function TileBody({ m, size, onOpen, count, view, edit }) {
     return <div className="irisflags-tile" onClick={(e) => e.stopPropagation()}>{window.IrisFlags ? React.createElement(window.IrisFlags, { size }) : null}</div>;
   }
   if (m.tileKind === "voorstel") {
-    return <div className="voorstel-tile" onClick={(e) => e.stopPropagation()}>{window.VoorstellenWidget ? React.createElement(window.VoorstellenWidget, { size, view, onOpen: onOpen || (() => {}) }) : null}</div>;
+    return <div className="voorstel-tile" onClick={(e) => e.stopPropagation()}>{<VoorstellenWidget size={size} view={view} onOpen={onOpen || (() => {})} />}</div>;
   }
   if (m.tileKind === "takenlog") {
-    return <div className="takenlog-tile" onClick={(e) => e.stopPropagation()}>{window.TakenLogWidget ? React.createElement(window.TakenLogWidget, { size, onOpen: onOpen || (() => {}) }) : null}</div>;
+    return <div className="takenlog-tile" onClick={(e) => e.stopPropagation()}>{<TakenLogWidget size={size} onOpen={onOpen || (() => {})} />}</div>;
   }
   if (m.tileKind === "salestaken") {
-    return <div className="voorstel-tile" onClick={(e) => e.stopPropagation()}>{window.VoorstellenWidget ? React.createElement(window.VoorstellenWidget, { size, view, onOpen: onOpen || (() => {}), scope: m.scope || "sales" }) : null}</div>;
+    return <div className="voorstel-tile" onClick={(e) => e.stopPropagation()}>{<VoorstellenWidget size={size} view={view} onOpen={onOpen || (() => {})} scope={m.scope || "sales"} />}</div>;
   }
   if (m.tileKind === "saleskansen") {
     return window.SaleskansenWidget ? React.createElement(window.SaleskansenWidget, { onOpen: onOpen || (() => {}) }) : null;
@@ -307,7 +309,7 @@ function TileBody({ m, size, onOpen, count, view, edit }) {
     return window.RelatieTakenWidget ? React.createElement(window.RelatieTakenWidget, { size, view, onOpen: onOpen || (() => {}) }) : null;
   }
   if (m.tileKind === "snelacties") {
-    return <div className="snelacties-tile" onClick={(e) => e.stopPropagation()}>{window.SnelleActiesWidget ? React.createElement(window.SnelleActiesWidget, { onOpen: onOpen || (() => {}) }) : null}</div>;
+    return <div className="snelacties-tile" onClick={(e) => e.stopPropagation()}>{<SnelleActiesWidget onOpen={onOpen || (() => {})} />}</div>;
   }
   if (m.tileKind === "irisattn") {
     const Comp = IrisVoorstellen;
@@ -1074,4 +1076,4 @@ function WidgetCard({ m, size, onSize, onAdd, placed, view, onView, kpiCount, on
   );
 }
 
-export { TileGrid, MOD, loadLayout, saveLayout, DEFAULT_LAYOUT, buildDefault, WidgetLibrary };
+export { TileGrid, MOD, loadLayout, saveLayout, DEFAULT_LAYOUT, buildDefault, WidgetLibrary, BOARDS };

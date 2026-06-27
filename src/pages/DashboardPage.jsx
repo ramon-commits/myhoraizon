@@ -7,7 +7,7 @@ import { Greeting } from '../design/dashboard.jsx'
 import { TileGrid } from '../design/tiles.jsx'
 
 export default function DashboardPage() {
-  const { edit, layout, setLayout, openLib, go, flags } = useOutletContext()
+  const { edit, layout, setLayout, openLib, go, flags, board } = useOutletContext()
 
   return (
     <div className="dash">
@@ -18,7 +18,7 @@ export default function DashboardPage() {
           <span>Sleep om te ordenen · tik <b>S / M / L / XL</b> voor de maat · <b>×</b> verbergt een widget · <b>Widget toevoegen</b> opent de markt</span>
         </div>
       )}
-      <TileGrid edit={edit} onOpen={go} layout={layout} setLayout={setLayout} flags={flags} onAddWidget={openLib} board="dashboard" />
+      {layout && <TileGrid edit={edit} onOpen={go} layout={layout} setLayout={setLayout} flags={flags} onAddWidget={openLib} board={board} />}
     </div>
   )
 }

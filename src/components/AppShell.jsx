@@ -1,33 +1,50 @@
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { useState } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Sidebar, TopBar } from '../design/shell.jsx'
 import { ToastHost, ConfirmHost, toast } from '../design/store.jsx'
-import { loadLayout, saveLayout, buildDefault, WidgetLibrary } from '../design/tiles.jsx'
+import { loadLayout, saveLayout, buildDefault, WidgetLibrary, BOARDS } from '../design/tiles.jsx'
 import IrisChatPanel from './IrisChatPanel'
 
 // AppShell: de werkruimte-shell uit de Claude Design-blauwdruk (app.jsx).
 // Sidebar + topbar + scroll-container; de pagina rendert via <Outlet/>.
-// Het dashboard-bord (sleepbare tegels) leeft hier: layout, edit-modus en de
-// widget-markt worden via Outlet-context aan DashboardPage doorgegeven.
+// Boards (dashboard, vandaag, ...) zijn sleepbare tegelborden: layout, edit-modus
+// en de widget-markt leven hier en gaan via Outlet-context naar de board-pagina.
 export default function AppShell() {
   const { email, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [edit, setEdit] = useState(false)
   const [libOpen, setLibOpen] = useState(false)
-  const [layout, setLayout] = useState(() => loadLayout('dashboard'))
 
   const seg = location.pathname.split('/')[1] || ''
   const view = seg === '' ? 'dashboard' : seg
+  const board = BOARDS[view] ? view : null
+
+  // layout van het huidige bord; override (lokaal bewerkt) wint zolang je op
+  // hetzelfde bord blijft, daarna valt 'ie terug op de opgeslagen layout.
+  const baseLayout = useMemo(() => (board ? loadLayout(board) : null), [board])
+  const [override, setOverride] = useState(null)
+  const layout = board ? (override && override.board === board ? override.layout : baseLayout) : null
+  const setLayout = (next) => setOverride((prev) => {
+    const cur = prev && prev.board === board ? prev.layout : baseLayout
+    const val = typeof next === 'function' ? next(cur) : next
+    return { board, layout: val }
+  })
+
+  // edit-modus en markt sluiten zodra je van bord wisselt
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setEdit(false); setLibOpen(false) }, [board])
 
   const go = (id) => { navigate(id === 'dashboard' ? '/' : '/' + id) }
   const onLogout = async () => { await signOut(); navigate('/login') }
   const openLib = () => setLibOpen(true)
   const onReset = () => {
-    const def = buildDefault('dashboard')
-    setLayout(def); saveLayout(def, 'dashboard')
-    toast('Dashboard-indeling hersteld', { icon: 'refresh' })
+    if (!board) return
+    const def = buildDefault(board)
+    setOverride({ board, layout: def })
+    saveLayout(def, board)
+    toast('Indeling hersteld', { icon: 'refresh' })
   }
 
   // flags leeg = alle modules zichtbaar (feature-flags-UI volgt later)
@@ -47,12 +64,13 @@ export default function AppShell() {
             openLib={openLib}
             flags={flags}
             onLogout={onLogout}
+            isBoard={!!board}
           />
-          <Outlet context={{ edit, layout, setLayout, openLib, go, flags }} />
+          <Outlet context={{ edit, layout, setLayout, openLib, go, flags, board }} />
         </div>
       </div>
-      {libOpen && (
-        <WidgetLibrary layout={layout} setLayout={setLayout} flags={flags} board="dashboard" onClose={() => setLibOpen(false)} />
+      {libOpen && board && (
+        <WidgetLibrary layout={layout} setLayout={setLayout} flags={flags} board={board} onClose={() => setLibOpen(false)} />
       )}
       <IrisChatPanel />
       <ToastHost />
