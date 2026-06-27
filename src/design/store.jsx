@@ -60,6 +60,10 @@ function focusRecord(mod, name) { setState("focus." + mod, { name, ts: Date.now(
 /* ---------- toasts ---------- */
 const _toastSubs = new Set();
 function toast(msg, opts) { _toastSubs.forEach((f) => f(msg, opts || {})); }
+
+/* Knoppen-poort: elke nog-niet-afgebouwde actie roept dit aan i.p.v. een stille
+   no-op. Toont een nette "komt binnenkort"-toast. NOOIT een lege onClick. */
+function notImplemented(label) { toast((label || "Deze actie") + " komt binnenkort", { icon: "spark", kind: "muted" }); }
 function ToastHost() {
   const [items, setItems] = useStateC([]);
   useEffectC(() => {
@@ -178,5 +182,5 @@ function ConfirmHost() {
 export {
   getState, setState, useStore, resetStore,
   getRecords, addRecord, updateRecord, removeRecord, focusRecord,
-  toast, ToastHost, confirmAsk, ConfirmHost, loadFlags, saveFlags, LOCKED_MODULES, Modal, Field, Portal,
+  toast, notImplemented, ToastHost, confirmAsk, ConfirmHost, loadFlags, saveFlags, LOCKED_MODULES, Modal, Field, Portal,
 };

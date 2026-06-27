@@ -4,6 +4,43 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 9: Knoppen-poort + dode-klik-test (2026-06-28)
+
+### Wat gebouwd (kwaliteitslaag, geen nieuwe features)
+- **`notImplemented(label)`** in `src/design/store.jsx` (geëxporteerd): toont
+  "[label] komt binnenkort". Regel: elke nog-niet-af actie roept dit aan, nooit
+  een stille no-op.
+- **Dode-klik-test** `tests/deadclick.mjs` + npm-script **`test:knoppen`**.
+  Stuurt headless Chrome via CDP (Node's ingebouwde WebSocket, geen extra deps),
+  logt in via de dev-login, bezoekt elke route met een verse pagina per klik,
+  klikt elk interactief element en checkt op verandering (URL / DOM-mutatie via
+  MutationObserver / toast). Faalt met een nette lijst (route + label).
+- **`KWALITEIT.md`**: de poort vastgelegd — geen module "done" tot test:knoppen
+  groen is.
+
+### Run-resultaat (Dashboard, Vandaag, Inbox + inbox-gesprek)
+- Eerste run: **1 dode klik** — `[Dashboard] "Bekijk"` (Iris-voorstellen-tegel).
+- Fixes:
+  - **gefixt**: `irisattn`-tegel gaf `onOpen` niet door aan `IrisVoorstellen`
+    (ontbrekende koppeling naar de bestaande navigatie-handler). Nu doorgegeven.
+  - **toast-stub**: `openKlantCard` (de "Ga naar klant" / "Volledige klantkaart
+    openen") → `notImplemented("Volledige klantkaart")`, want de CRM-klantkaart
+    bestaat nog niet (toekomstvast: zet nog steeds crm.full voor later).
+- Tweede run: **100 knoppen, 4 routes, GROEN** (geen dode klikken).
+
+### Bestanden
+- Nieuw: `tests/deadclick.mjs`, `KWALITEIT.md`.
+- Gewijzigd: `src/design/store.jsx` (notImplemented), `src/design/tiles.jsx`
+  (onOpen door), `src/design/objectactions.jsx` (openKlantCard → notImplemented),
+  `package.json` (test:knoppen).
+
+### Getest
+- `npm run build` + `npm run lint`: groen. `npm run test:knoppen`: groen.
+
+### Status: knoppen-poort groen op Dashboard / Vandaag / Inbox.
+
+---
+
 ## Stap 8: De Inbox-module uit de blauwdruk (2026-06-28)
 
 ### Wat gebouwd

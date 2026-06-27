@@ -322,7 +322,7 @@ function TileBody({ m, size, onOpen, count, view, edit }) {
         </div>
       );
     }
-    return <div className="irisattn-body" onClick={(e) => e.stopPropagation()}>{Comp ? <Comp /> : null}</div>;
+    return <div className="irisattn-body" onClick={(e) => e.stopPropagation()}>{Comp ? <Comp onOpen={onOpen} /> : null}</div>;
   }
 
   const stat = <StatBlock value={m.stat} sub={m.sub} delta={m.delta} money={m.money} size={med ? "lg" : "sm"} />;
