@@ -550,5 +550,5 @@ function Panel({ title, eyebrow, accent, right, children, pad = true, wid }) {
 export {
   AC, ACsoft, ACHEX, WidgetCtx, HoraizonLogo, KyanoMark, KyanoBadge, Avatar, Eyebrow, Icon, Btn, Chip,
   Sparkline, ChannelIcon, Bar, Panel, Delta, StatBlock, BarChart, KpiStrip, KpiCard,
-  AreaChart, Donut, Ring
+  AreaChart, Donut, Ring, smoothPath
 };

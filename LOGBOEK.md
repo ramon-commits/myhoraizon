@@ -4,6 +4,56 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 6: De sleepbare tegel-laag uit de blauwdruk (2026-06-28)
+
+### Wat gedaan
+De tegel-laag uit `tiles.jsx` letterlijk geport; het dashboard is nu 1:1 het
+sleepbare tegelbord uit de blauwdruk (op demo-data).
+- **`src/design/tiles.jsx`**: TileGrid (drag-reorder met overlay + doel-index),
+  Tile (S/M/L/XL resize, view-cycler, verbergen, jiggle via blauwdruk-CSS),
+  TileBody (alle tegel-types: kpis/irisattn/agenda/today/funnel/list/invoices/
+  social/integration/spark/barchart/charts), WidgetLibrary (de widget-markt met
+  per-board pool, zoek, tilt-preview, instellingen-popover) + layout-persistentie
+  (loadLayout/saveLayout/buildDefault per board).
+- **`src/design/charts.jsx`** geport: `WidgetChart` + VBars/LineC/PieView +
+  helpers (chartable, monthSeries, breakdown, secondAccent) voor de
+  area/staaf/lijn/cirkel-views.
+- **`src/design/altviews.jsx`** geport: CompactView/DayView/WeekView/
+  AgentStatusView/ChannelVolView (inhoudelijke alternatieve weergaven).
+- `components.jsx` exporteert nu `smoothPath` (charts heeft het nodig).
+- **Bedrading**: `AppShell` bezit de dashboard-layout, edit-modus en widget-markt;
+  topbar-knoppen **Bewerk** (jiggle + slepen), **Herstel**, **Widget toevoegen**,
+  **Klaar** sturen het bord aan. `DashboardPage` rendert Greeting + `TileGrid`
+  via Outlet-context.
+- **prefers-reduced-motion**: de jiggle (`@keyframes jiggle .85s`) en de
+  reduced-motion-uitschakeling zitten in de blauwdruk-CSS en worden gerespecteerd.
+- Menu's/popovers gebruiken `useSmartMenu` (blijven binnen beeld).
+
+### Bestanden
+- Nieuw: `src/design/tiles.jsx`, `src/design/charts.jsx`, `src/design/altviews.jsx`.
+- Gewijzigd: `src/components/AppShell.jsx` (layout/edit/markt + Outlet-context),
+  `src/pages/DashboardPage.jsx` (TileGrid), `src/design/components.jsx`
+  (smoothPath export).
+
+### Getest
+- `npm run build` slaagt, `npm run lint` exit 0 (3 faithful-port
+  exhaustive-deps waarschuwingen).
+- Headless screenshots: het tegelbord rendert volledig (KPI-strip, Iris,
+  Omzet-grafiek, Agenda, Vandaag, Sales-funnel, CRM, Facturen, Exact). Edit-modus
+  toont de hint-balk, "Widget toevoegen", ×-verwijderen, S/M/L/XL-pills, de
+  view-cycler en de KPI-teller.
+
+### Status: klaar, wacht op visuele vergelijking met de Design
+
+### Let op
+- Tegel-bodies van NIET-dashboard widgets (IrisChat/IrisBriefing/IrisFlags/
+  VoorstellenWidget/TakenLog/Saleskansen/...) renderen voorlopig null tot hun
+  modules geport zijn; ze horen bij andere boards en staan niet in de
+  dashboard-markt (behalve `takenlog`, die toont voorlopig leeg).
+- Alles draait op demo-data (`data.js`); Supabase-koppeling volgt.
+
+---
+
 ## Stap 5: De shell exact uit de blauwdruk (2026-06-27)
 
 ### Wat gedaan

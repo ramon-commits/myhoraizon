@@ -3,25 +3,32 @@ import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Sidebar, TopBar } from '../design/shell.jsx'
 import { ToastHost, ConfirmHost, toast } from '../design/store.jsx'
+import { loadLayout, saveLayout, buildDefault, WidgetLibrary } from '../design/tiles.jsx'
 import IrisChatPanel from './IrisChatPanel'
 
 // AppShell: de werkruimte-shell uit de Claude Design-blauwdruk (app.jsx).
 // Sidebar + topbar + scroll-container; de pagina rendert via <Outlet/>.
+// Het dashboard-bord (sleepbare tegels) leeft hier: layout, edit-modus en de
+// widget-markt worden via Outlet-context aan DashboardPage doorgegeven.
 export default function AppShell() {
   const { email, signOut } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
   const [edit, setEdit] = useState(false)
+  const [libOpen, setLibOpen] = useState(false)
+  const [layout, setLayout] = useState(() => loadLayout('dashboard'))
 
-  // route -> view-id zoals de blauwdruk (dashboard op '/')
   const seg = location.pathname.split('/')[1] || ''
   const view = seg === '' ? 'dashboard' : seg
 
   const go = (id) => { navigate(id === 'dashboard' ? '/' : '/' + id) }
   const onLogout = async () => { await signOut(); navigate('/login') }
-  // tegel-bewerken (Widget-markt / herstel) komt in de tegel-laag-stap
-  const openLib = () => toast('De widget-markt komt in de volgende stap', { icon: 'grid' })
-  const onReset = () => toast('Indeling herstellen komt met de tegel-laag', { icon: 'refresh' })
+  const openLib = () => setLibOpen(true)
+  const onReset = () => {
+    const def = buildDefault('dashboard')
+    setLayout(def); saveLayout(def, 'dashboard')
+    toast('Dashboard-indeling hersteld', { icon: 'refresh' })
+  }
 
   // flags leeg = alle modules zichtbaar (feature-flags-UI volgt later)
   const flags = {}
@@ -41,9 +48,12 @@ export default function AppShell() {
             flags={flags}
             onLogout={onLogout}
           />
-          <Outlet />
+          <Outlet context={{ edit, layout, setLayout, openLib, go, flags }} />
         </div>
       </div>
+      {libOpen && (
+        <WidgetLibrary layout={layout} setLayout={setLayout} flags={flags} board="dashboard" onClose={() => setLibOpen(false)} />
+      )}
       <IrisChatPanel />
       <ToastHost />
       <ConfirmHost />
