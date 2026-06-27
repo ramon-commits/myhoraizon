@@ -10,6 +10,26 @@ export default function LoginPage() {
   const [submitting, setSubmitting] = useState(false)
   const [sent, setSent] = useState(false)
   const [err, setErr] = useState(null)
+  const [devPassword, setDevPassword] = useState('')
+  const [devBusy, setDevBusy] = useState(false)
+
+  async function handleDevLogin(e) {
+    e.preventDefault()
+    setDevBusy(true)
+    setErr(null)
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password: devPassword,
+      })
+      if (error) throw error
+      // AuthContext pakt de sessie op via onAuthStateChange en redirect naar /.
+    } catch (e) {
+      setErr(e.message)
+    } finally {
+      setDevBusy(false)
+    }
+  }
 
   if (loading) return null
   if (session) return <Navigate to="/" replace />
@@ -114,6 +134,42 @@ export default function LoginPage() {
               {submitting ? 'Versturen…' : 'Stuur me een inlog-link'}
             </button>
             <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+          </form>
+        )}
+
+        {import.meta.env.DEV && (
+          <form onSubmit={handleDevLogin} style={{ marginTop: 20, paddingTop: 16, borderTop: '1px dashed var(--color-line-hi)' }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--color-ink-dim)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>
+              Dev-login (mail omzeilen)
+            </div>
+            <input
+              type="password"
+              value={devPassword}
+              onChange={(e) => setDevPassword(e.target.value)}
+              placeholder="Wachtwoord van de test-user"
+              style={{
+                width: '100%', padding: '10px 14px',
+                border: '1px solid var(--color-line-hi)', borderRadius: 10,
+                fontSize: 14, fontFamily: 'var(--font-body)',
+              }}
+            />
+            <button
+              type="submit"
+              disabled={devBusy || !email.trim() || !devPassword}
+              style={{
+                marginTop: 10, width: '100%', padding: '10px 16px',
+                border: '1px solid var(--color-line-hi)', borderRadius: 10,
+                background: '#fff', color: 'var(--color-ink)',
+                fontFamily: 'var(--font-body)', fontWeight: 600, fontSize: 13,
+                cursor: devBusy || !email.trim() || !devPassword ? 'default' : 'pointer',
+                opacity: devBusy || !email.trim() || !devPassword ? 0.5 : 1,
+              }}
+            >
+              {devBusy ? 'Inloggen...' : 'Log in met wachtwoord'}
+            </button>
+            <p style={{ marginTop: 8, fontSize: 11, color: 'var(--color-ink-dim)', lineHeight: 1.4 }}>
+              Alleen zichtbaar in dev. Vul hierboven je email in plus dit wachtwoord.
+            </p>
           </form>
         )}
       </div>

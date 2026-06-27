@@ -9,6 +9,7 @@ import { PLACEHOLDER_ITEMS } from './nav'
 
 import LoginPage from './pages/LoginPage'
 import AuthCallback from './pages/AuthCallback'
+import DesignCheckPage from './pages/DesignCheckPage'
 import DashboardPage from './pages/DashboardPage'
 import QuotesListPage from './pages/QuotesListPage'
 import QuoteDetailPage from './pages/QuoteDetailPage'
@@ -31,6 +32,7 @@ export default function App() {
           <Routes>
             <Route path="/login" element={<LoginPage />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            {import.meta.env.DEV && <Route path="/_design" element={<DesignCheckPage />} />}
 
             <Route
               path="/"
