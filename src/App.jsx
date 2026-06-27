@@ -5,7 +5,17 @@ import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AppShell from './components/AppShell'
 import PlaceholderPage from './components/PlaceholderPage'
-import { PLACEHOLDER_ITEMS } from './nav'
+import { KYANO } from './design/data'
+
+// Placeholder-routes voor elke blauwdruk-module die nog geen echte pagina heeft,
+// plus de losse views (iris, settings, vandaag, ...). De sidebar navigeert naar
+// '/{id}'; deze routes vangen ze op tot de module gebouwd is.
+const REAL_PAGES = new Set(['offertes', 'contracten', 'facturen'])
+const PLACEHOLDER_ROUTES = [
+  ...KYANO.modules.map((m) => ({ id: m.id, label: m.name })),
+  { id: 'iris', label: 'Iris' },
+  { id: 'settings', label: 'Beheer' },
+].filter((r) => !REAL_PAGES.has(r.id))
 
 import LoginPage from './pages/LoginPage'
 import AuthCallback from './pages/AuthCallback'
@@ -50,11 +60,11 @@ export default function App() {
               <Route path="facturen" element={<InvoicesListPage />} />
               <Route path="facturen/:id" element={<InvoiceDetailPage />} />
 
-              {PLACEHOLDER_ITEMS.map((it) => (
+              {PLACEHOLDER_ROUTES.map((r) => (
                 <Route
-                  key={it.to}
-                  path={it.to.slice(1)}
-                  element={<PlaceholderPage title={it.label} />}
+                  key={r.id}
+                  path={r.id}
+                  element={<PlaceholderPage title={r.label} />}
                 />
               ))}
 

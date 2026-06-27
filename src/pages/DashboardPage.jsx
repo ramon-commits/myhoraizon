@@ -12,8 +12,7 @@ export default function DashboardPage() {
   const tasks = KYANO.tasks || []
 
   return (
-    <div style={{ padding: '28px 34px 60px' }}>
-      <div className="dash">
+    <div className="dash">
         <Greeting />
 
         <KpiStrip onOpen={go} count={4} editing={false} />
@@ -37,6 +36,5 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
-    </div>
   )
 }

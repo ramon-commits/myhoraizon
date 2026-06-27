@@ -4,6 +4,50 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 5: De shell exact uit de blauwdruk (2026-06-27)
+
+### Wat gedaan
+De `AppShell` vervangen door de werkruimte-shell uit de blauwdruk (`app.jsx`),
+1:1 met de markup/classes, navigatie geadapteerd naar react-router.
+- **Sidebar** (`src/design/shell.jsx`): logo + "klant-werkruimte", Dashboard,
+  primair card-blok met **Iris (met teller)** + Vandaag/Inbox/Agenda/Team, en de
+  card-groepen (Sales/Pipeline/Relatiebeheer/Leadfinder/CRM · Website/Pagina's/
+  Editor/Aanvragen/Groei/Studio/Domein · Offertes/Contracten/Facturen · Social ·
+  Exact/Mollie/Google · Analytics/Omzet/Club/Agents + Instellingen). Live
+  **module-tellers** (badges) uit `moduleBadge()`. Officiële teal merk-mark voor
+  Iris (`/brand/horaizon-teal-1e7f75.svg`). Footer: e-mail + echte Uitloggen.
+- **Topbar**: breadcrumb "{bedrijf} · {view}" links, zoekbalk (live zoek over
+  klanten/deals/offertes/facturen) in het midden, rechts **Bewerk** (op het
+  dashboard), **Nieuw** (menu), **notificaties** (agents-feed) en **avatar**
+  (account-menu met uitloggen).
+- Navigatie: `go(id)` → react-router; `view` afgeleid uit het pad. Routes voor
+  alle blauwdruk-modules + iris/settings gegenereerd uit `KYANO.modules`
+  (placeholders waar nog geen pagina is). `src/nav.js` (stap 1) verwijderd,
+  vervangen door de blauwdruk-`NAV`.
+- `ToastHost`/`ConfirmHost` in de shell; `zoom:0.9` op `.app` (blauwdruk).
+  `DashboardPage` dubbele padding verwijderd (de shell-scroll padt nu).
+
+### Bestanden
+- Nieuw: `src/design/shell.jsx`.
+- Gewijzigd: `src/components/AppShell.jsx` (shell-layout), `src/App.jsx` (routes
+  uit KYANO), `src/pages/DashboardPage.jsx` (padding weg).
+- Verwijderd: `src/nav.js`.
+
+### Getest
+- `npm run build` slaagt, `npm run lint` exit 0 (alleen de bekende
+  faithful-port waarschuwing).
+- Headless screenshot van de volledige shell + dashboard: sidebar-groepen,
+  tellers, topbar en content renderen correct.
+
+### Status: klaar, wacht op visuele vergelijking met de Design
+
+### Let op
+- "Bewerk" en de widget-markt zijn nu nog placeholders (toast); de echte
+  tegel-bewerken-flow komt met de sleepbare tegel-laag (stap 6).
+- Alles op demo-data; module-pagina's zijn placeholders tot ze gebouwd worden.
+
+---
+
 ## Stap 5a: Nieuwe bronnen vastgelegd + analyse (2026-06-27)
 
 ### Wat gedaan
