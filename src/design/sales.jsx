@@ -7,11 +7,12 @@
    ============================================================ */
 import React from 'react'
 import { ICONS } from './icons'
-import { setState, getState, useStore, toast, notImplemented, confirmAsk, Modal, Field } from './store.jsx'
+import { setState, getState, useStore, toast, confirmAsk, Modal, Field } from './store.jsx'
 import { AC, ACsoft, Avatar, Btn, Panel, AreaChart, KyanoMark } from './components.jsx'
 import { allCustomers, custById } from './customers.js'
 import { OwnerField, currentActor, logToMember } from './assign.jsx'
 import { ObjectActions, openKlantCard } from './objectactions.jsx'
+import { WidgetsProvider, HiddenTray } from './widgets.jsx'
 
 const { useState: useStateS2 } = React
 
@@ -575,6 +576,7 @@ function SalesDash({ onOpen }) {
 /* ---------- OVERZICHT: widget-bord met marktplaats (zoals dashboard) ---------- */
 function SalesOverzicht({ onOpen, onCard, goTab }) {
   const store = useStore();
+  const [edit, setEdit] = useStateS2(false);
   const custs = allCustomers(store);
   const pipe = SALES_PIPELINE.map((d) => ({ ...d, stage: dealStage(store, d) }));
   const open = pipe.filter((d) => d.stage !== "gewonnen");
@@ -593,13 +595,13 @@ function SalesOverzicht({ onOpen, onCard, goTab }) {
           <div className="sx-kpi"><div className="sx-kpi-v" style={{ color: AC("green") }}>{eur(wonValue)}</div><div className="sx-kpi-l mono">gewonnen · mnd</div></div>
           <div className="sx-kpi"><div className="sx-kpi-v" style={{ color: stale.length ? AC("orange") : "var(--ink1)" }}>{stale.length}</div><div className="sx-kpi-l mono">staan stil</div></div>
         </div>
-        <button className="tb-btn" onClick={() => notImplemented("Widgets bewerken")}>
-          <span dangerouslySetInnerHTML={{ __html: ICONS("sliders", { sw: 2 }) }} />Bewerk
+        <button className="tb-btn" onClick={() => setEdit((v) => !v)}>
+          <span dangerouslySetInnerHTML={{ __html: ICONS(edit ? "check" : "sliders", { sw: 2 }) }} />{edit ? "Klaar" : "Bewerk"}
         </button>
       </div>
 
-      <>
-        <div className="page-body pw-grid">
+      <WidgetsProvider moduleId="sales" editing={edit}>
+        <div className={"page-body pw-grid" + (edit ? " pw-edit" : "")}>
           <Panel wid="Pijplijn" eyebrow="Nieuwe klanten · per fase" title="Pijplijn" accent="red"
             right={<Btn kind="tint" accent="red" size="sm" onClick={() => goTab("pipeline")}>Naar pipeline</Btn>}>
             <div className="sx-funnel">
@@ -650,14 +652,15 @@ function SalesOverzicht({ onOpen, onCard, goTab }) {
             ); })}
           </Panel>
         </div>
-      </>
+        <HiddenTray />
+      </WidgetsProvider>
     </>
   );
 }
 
 export {
   SalesDash, SalesPipeline, SalesOverzicht, PipelineSummaryBar, NewDealModal, PipelineFlowEditor,
-  PIPE_STAGES, STAGE_BY, SALES_PIPELINE, eur, dealStage, daysSinceContact, stageTarget,
+  PIPE_STAGES, STAGE_BY, SALES_PIPELINE, eur, dealStage, daysSinceContact, stageTarget, stageByKey,
   StatusDot, STATUS_META, custAttention, custIdleMonths, custIdleLabel, custNext, setCustNext, DUE_META,
   custDeal, riskValue, riskLabel, custKvk, custKind, custLegal, custWebsite, custAddress, custContacts, addCustContact,
   CRM_NEXT, LOG_AC, LOG_IC, idleLabel, addCustLog, buildSeedTimeline, custTimeline,

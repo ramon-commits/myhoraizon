@@ -36,6 +36,10 @@ export default defineConfig([
       // idem. Echte ongebruikte lokale variabelen/imports blijven wel fouten.
       'no-unused-vars': ['error', { args: 'none', caughtErrors: 'none' }],
       'react-hooks/immutability': 'off',
+      // WidgetsProvider herlaadt z'n layout uit localStorage wanneer moduleId
+      // wisselt (setPw in een effect). Dat is het bewuste blauwdruk-gedrag uit
+      // 31-widgets, geen bug; deze performance-opinie-regel staat hier dus uit.
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ])

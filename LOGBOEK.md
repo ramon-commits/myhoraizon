@@ -4,6 +4,77 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Reparatie-steen 1: 31-widgets als gedeelde laag (2026-06-28)
+
+### Het ontbrekende fundament
+Een trouw-audit wees uit dat het bewerkbare widget-bord uit blauwdruk-module
+**31-widgets** nergens was geport. Daardoor hadden Sales-overzicht, CRM en alle
+module-pagina's geen eigen bord: `<Panel>` consumeerde al een `WidgetCtx`, maar
+de **provider** die die context vult ontbrak. Het Sales-overzicht had wél de
+opmaak (`pw-grid` + `Panel wid="…"`) maar de Bewerk-knop was een
+`notImplemented`-stub. Dit fundament is nu alsnog geport.
+
+### Wat 31-widgets levert (de motor)
+- **WidgetsProvider** (`moduleId`, `editing`) — vult `WidgetCtx`: registratie,
+  verbergen/tonen, Klein/Groot (half/full), volgorde + slepen om te ordenen.
+  Bewaard per module in `localStorage: myhoraizon.pagelayout.<id>`.
+- **HiddenTray** — de module-scoped "Widget toevoegen"-markt onderaan de pagina
+  (alleen in bewerkmodus).
+- **WidgetsAdmin** — centrale aan/uit-schakelaars per module (voor Beheer).
+- Helpers **loadPW / savePW / resetPW** + de registratie-cache `__widgetReg`.
+
+### Wat al bestond, wat nieuw is
+- **Bestond al** (correct): `WidgetCtx` + de bewerkbare `<Panel>` in
+  `components.jsx`; de gedeelde tegel-laag `tiles.jsx` (TileGrid van het
+  dashboard, een aparte motor); `charts.jsx`/`altviews.jsx`.
+- **Nieuw als gedeelde laag**: `src/design/widgets.jsx` — letterlijke ESM-port
+  van 31-widgets. Elke module-pagina kan nu een eigen bord krijgen via
+  `<WidgetsProvider moduleId="…" editing={edit}> … <HiddenTray/> </WidgetsProvider>`.
+
+### Eerste aansluiting (bewijs van de motor)
+`SalesOverzicht` is 1:1 met blauwdruk-module 10 gebracht: edit-state, de
+`WP`/`HT`-wrapper en een echte Bewerk/Klaar-toggle in plaats van de stub. De
+overige pagina's (CRM, enz.) volgen in latere reparatie-stenen — dit is bewust
+de gedeelde motor + één aansluiting, niet alle pagina's tegelijk.
+
+### Trouw-rapport
+- **Design-ref-bestand**: `design-ref/modules/31-widgets-jsx-bewerkbare-widgets-op-lke-mo.jsx`
+  (en `10-sales-…` voor de Sales-aansluiting).
+- **Trouw-score: 9/10**. Bodies van WidgetsProvider/HiddenTray/WidgetsAdmin zijn
+  letterlijk overgenomen. Afwijkingen, allemaal de verplichte ESM-vertaling:
+  - `window.WidgetCtx` → geïmporteerde `WidgetCtx` uit components.jsx.
+  - `window.MOD` → lokale `MOD` uit `KYANO.modules` (zelfde patroon als
+    dashboard.jsx/shell.jsx; accent/naam-fallbacks ongewijzigd).
+  - `Object.assign(window, …)` → ESM-`export`.
+  - `__widgetReg` blijft bewust op `window` (cross-module cache die provider én
+    admin delen, exact als de blauwdruk).
+  - Eén eslint-opinie-regel (`react-hooks/set-state-in-effect`) staat uit voor
+    `src/design/**` met motivatie; het effect-gedrag is 1:1 de blauwdruk.
+
+### Bestanden
+- Nieuw: `src/design/widgets.jsx`.
+- Gewijzigd: `src/design/sales.jsx` (SalesOverzicht: WP/HT-wrapper + echte
+  toggle, `notImplemented`-import verwijderd), `eslint.config.js` (design-override
+  + 1 regel).
+
+### Getest
+- `npm run build`: slaagt.
+- `npm run lint`: 0 errors (3 pre-existing exhaustive-deps-warnings).
+- `npm run test:knoppen`: GROEN — 102 knoppen over 4 routes. Extra: `/sales`
+  apart gedraaid → 44 knoppen groen, inclusief de nieuwe Bewerk-knop (toggelt
+  bewerkmodus, geen dode klik meer).
+
+### Zelf checken
+1. Open **/sales** (tab Overzicht) → klik **Bewerk**: panels gaan in
+   wiebel/bewerkmodus (×-knop, Klein/Groot-pillen) en onderaan verschijnt de
+   echte widget-markt "Widget toevoegen — Alleen widgets van …". Tik × op een
+   panel → het verhuist naar de markt; tik 'm daar weer aan → terug op de pagina.
+   Knop heet nu **Klaar**; opnieuw klikken sluit de bewerkmodus.
+2. Herlaad de pagina: de gekozen indeling (verborgen/volgorde/grootte) blijft
+   staan — opgeslagen onder `localStorage` sleutel `myhoraizon.pagelayout.sales`.
+
+---
+
 ## Stap 12: Sales-suite deel 2 — CRM + de GEDEELDE klantkaart (2026-06-28)
 
 ### De gouden regel waargemaakt: ÉÉN klantkaart, overal
