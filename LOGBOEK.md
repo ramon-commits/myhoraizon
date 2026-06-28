@@ -4,6 +4,116 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 14: Pipeline afgemaakt — het laatste board, mét tabs (2026-06-28)
+
+### Wat gedaan
+Het laatste resterende board, `/pipeline`, is omgezet naar het volledige
+blauwdruk-patroon: een tab-pagina (`SalesPipelinePage`) met **TABS** —
+**Vandaag** (het bewerkbare tegelbord) en **Bord** (de Trello-kanban). Niet
+platgeslagen tot alleen de kanban.
+
+**a. `tiles.jsx` — widgets gewired (van window-globals naar ESM).**
+De pipeline-tegels renderden via `window.SaleskansenWidget` /
+`window.PipelineTakenWidget` (nooit gezet → `null`). Nu echte imports uit
+`salestasks.jsx`, zoals eerder bij de Iris-tegels:
+- `tileKind "saleskansen"`  → `<SaleskansenWidget>`  (de ApprovalQueue / inkomende kansen).
+- `tileKind "pipelinetaken"` → `<PipelineTakenWidget>` (de pipeline-taken, "vandaag oppakken").
+`MOD` bevat beide (via `EXTRA_TILES`), dus `BOARDS.pipeline`
+(`PIPE_ORDER`/pin: saleskansen + pipelinetaken + saleskpis) rendert ze nu echt.
+
+**b. `PipelinePage.jsx` — omgezet naar `SalesPipelinePage` met tabs + `<TileGrid board="pipeline">`.**
+`SalesPipelinePage` had wél de tabbar maar **géén Vandaag-tak** (alleen
+`tab === "bord"` rendeerde iets — de Vandaag-tab was leeg). Opgelost met een
+`vandaagSlot`-prop + een trouwe fallback (ApprovalQueue + pipeline-taken direct).
+`PipelinePage` haalt de board-context uit `useOutletContext()` en geeft
+`<TileGrid board="pipeline">` als `vandaagSlot` mee → de Vandaag-tab is nu het
+bewerkbare bord; de Bord-tab is de kanban (`SalesPipeline summary={false}`).
+
+Het tabs-blok (geciteerd uit de ESM-port `salestasks.jsx`, zelf de 1:1-port van
+de blauwdruk `dashboard/salestasks.jsx` — zie caveat hieronder):
+```jsx
+<div className="st-tabbar" role="tablist">
+  <button role="tab" aria-selected={tab === "vandaag"} className={"st-tab" + (tab === "vandaag" ? " on" : "")} onClick={() => setTab("vandaag")}>
+    <span … ICONS("check") />Vandaag
+    {(openN + inboxN) > 0 && <span className="st-tab-n">{openN + inboxN}</span>}
+  </button>
+  <button role="tab" aria-selected={tab === "bord"} className={"st-tab" + (tab === "bord" ? " on" : "")} onClick={() => setTab("bord")}>
+    <span … ICONS("grid") />Bord
+  </button>
+  <span className="st-tab-hint mono">{tab === "vandaag" ? "Keur kansen goed …" : "Sleep deals …"}</span>
+</div>
+{tab === "vandaag" && (vandaagSlot || (<div className="st-pipe-vandaag"><SaleskansenWidget …/><PipelineTakenWidget …/></div>))}
+{tab === "bord" && <SalesPipeline onOpen={onOpen} onCard={…} summary={false} />}
+```
+
+> **Caveat — Design MCP niet bereikbaar.** Stap 2 vroeg het tabs-blok live uit
+> de Design MCP (`shell.jsx`) te citeren. Het enige beschrijfbare design-system-
+> project (`019e2151…`, "Design System") is **leeg**; het blauwdruk-project uit
+> reparatie-steen 2 (`a948021d…`) staat niet in de schrijfbare lijst en is niet
+> opvraagbaar (404 op `dashboard/shell.jsx`). Daarom geciteerd uit de reeds
+> gecommitte ESM-port `salestasks.jsx`, die de blauwdruk-herkomst in z'n
+> bestandskop draagt en al in reparatie-steen 2 als bron gold. Geef de volledige
+> project-id (of her-autoriseer de Design-login) als je een verse live-fetch wilt.
+
+### Twee dode-klik-fixes (knoppen-poort over álle boards)
+De `test:knoppen`-default dekt 4 routes; ik heb alle 7 board-routes apart
+getest. Dat ving twee dode klikken:
+- **`/pipeline` — actieve "Vandaag"-tab**: een actieve tab opnieuw aanklikken doet
+  (terecht) niets. De test zondert actieve tabs uit via `role="tab"`; de `st-tab`-
+  knoppen kregen daarom `role="tab"` + `aria-selected` (a11y-correct, conventie-volgend).
+- **`/iris` — naamloze verstuur-knop** (pre-existing, uit stap 13; viel buiten de
+  4 default-routes): de chat-`send-btn` deed niets bij een leeg veld. Nu
+  `disabled={!val.trim()}` + `aria-label`/`title` (zelfde patroon als de
+  `irisbrief-refresh`-knop in hetzelfde bestand).
+
+### Bestanden
+- `src/pages/PipelinePage.jsx` — omgezet: `useOutletContext` + `SalesPipelinePage`
+  met `<TileGrid board="pipeline">` als Vandaag-slot (was: kale `SalesPipeline`-kanban).
+- `src/design/salestasks.jsx` — `vandaagSlot`-prop + Vandaag-tak toegevoegd;
+  `st-tab` → `role="tab"` + `aria-selected`.
+- `src/design/tiles.jsx` — `saleskansen`/`pipelinetaken` van `window.*` naar ESM-imports.
+- `src/design/iris.jsx` — `send-btn` disabled-bij-leeg + label.
+
+### Getest
+- `npm run build`: slaagt (1900 modules). `npm run lint`: 0 errors (3 pre-existing warnings).
+- `npm run test:knoppen` (default, 4 routes): GROEN — 110 knoppen.
+- Extra: alle 7 board-routes (`/pipeline /iris /vandaag /seo /studio /website /sales`)
+  apart: GROEN — 81 knoppen, geen dode klikken. `/pipeline` alleen: 42 knoppen.
+  (Let op: de knoppen-poort heeft een **live dev-server op :5174** nodig; zonder
+  server test 'm de Chrome-foutpagina en is GROEN misleidend — met server geverifieerd.)
+
+### Trouw-rapport — Pipeline (`/pipeline`)
+- **Design**: `dashboard/salestasks.jsx` · `SalesPipelinePage` (via de ESM-port; MCP-caveat hierboven).
+- **Score: 9/10.** De pagina heeft nu de **TABS** (Vandaag + Bord), exact het
+  blauwdruk-patroon, met de ApprovalQueue (saleskansen) + pipeline-taken als
+  echte widgets en de kanban op de Bord-tab. `BOARDS.pipeline` pool/volgorde/pin
+  1:1. Afwijkingen:
+  1. De Vandaag-tab gebruikt `<TileGrid board="pipeline">` (bewerkbaar bord) i.p.v.
+     de twee widgets recht-onder-elkaar uit de bron — bewuste, app-brede keuze
+     (zelfde lijn als `/sales` in reparatie-steen 2); dezelfde widgets, nu sleep-/
+     resize-baar met KPI's erbij. De bron-layout blijft als fallback in `SalesPipelinePage`.
+  2. Hero-mark = `chartup`-icoon (port-conventie), niet de blauwdruk-asset.
+
+### Klikpad — /pipeline
+1. Ga naar **/pipeline**. Standaard staat de **Vandaag**-tab actief: je ziet het
+   tegelbord met **Nieuwe saleskansen** (goedkeuren → in de pijplijn), **Pipeline-
+   taken** (vandaag oppakken), en de **KPI's**.
+2. Klik **Bord**: je schakelt naar de **kanban** — sleep deals door de fases.
+3. Klik **Vandaag** terug: bord weer zichtbaar. (Actieve tab opnieuw klikken doet
+   niets — dat is correct, en de knoppen-poort zondert 'm nu uit.)
+4. Topbar **Bewerk** (op de Vandaag-tab): tegels wiebelen, S/M/L/XL + ×, slepen.
+   **Widget toevoegen** → de pipeline-widgetmarkt. Indeling blijft in
+   `localStorage` (`myhoraizon.pipeline.layout.*`); **Herstel** zet 'm terug.
+5. Hero: **Nieuwe deal** (modal) en **Flow & fase-duur** (de fase-editor).
+
+### Bevestiging
+**Pipeline heeft nu de tabs** (Vandaag = bewerkbaar bord / Bord = kanban) — niet
+platgeslagen tot alleen de kanban. Alle boards zijn af.
+
+### Status: veiliggesteld op GitHub. Alle module-boards uit de blauwdruk staan.
+
+---
+
 ## Stap 13: De zes resterende board-views uit de blauwdruk (2026-06-28)
 
 > Verplaatsing: project staat nu in `~/projects/myhoraizon` (was Desktop;

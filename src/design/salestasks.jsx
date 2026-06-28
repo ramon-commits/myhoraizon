@@ -331,7 +331,7 @@ function PipelineTakenWidget({ onOpen, view }) {
 /* ============================================================
    PIPELINE-pagina, tabs: Vandaag (taken via het bord) · Bord (kanban)
    ============================================================ */
-function SalesPipelinePage({ onOpen, tab: tabProp, onTab }) {
+function SalesPipelinePage({ onOpen, tab: tabProp, onTab, vandaagSlot }) {
   const store = useStore()
   const [tabLocal, setTabLocal] = useState("vandaag")
   const tab = tabProp !== undefined ? tabProp : tabLocal
@@ -358,16 +358,23 @@ function SalesPipelinePage({ onOpen, tab: tabProp, onTab }) {
         </div>
       </header>
 
-      <div className="st-tabbar">
-        <button className={"st-tab" + (tab === "vandaag" ? " on" : "")} onClick={() => setTab("vandaag")}>
+      <div className="st-tabbar" role="tablist">
+        <button role="tab" aria-selected={tab === "vandaag"} className={"st-tab" + (tab === "vandaag" ? " on" : "")} onClick={() => setTab("vandaag")}>
           <span dangerouslySetInnerHTML={{ __html: ICONS("check", { sw: 2 }) }} />Vandaag
           {(openN + inboxN) > 0 && <span className="st-tab-n">{openN + inboxN}</span>}
         </button>
-        <button className={"st-tab" + (tab === "bord" ? " on" : "")} onClick={() => setTab("bord")}>
+        <button role="tab" aria-selected={tab === "bord"} className={"st-tab" + (tab === "bord" ? " on" : "")} onClick={() => setTab("bord")}>
           <span dangerouslySetInnerHTML={{ __html: ICONS("grid", { sw: 2 }) }} />Bord
         </button>
         <span className="st-tab-hint mono">{tab === "vandaag" ? "Keur kansen goed en werk je acties af, slim uit het CRM" : "Sleep deals door je zelf-ingerichte pijplijn"}</span>
       </div>
+
+      {tab === "vandaag" && (vandaagSlot || (
+        <div className="st-pipe-vandaag">
+          <SaleskansenWidget onOpen={onOpen} />
+          <PipelineTakenWidget onOpen={onOpen} />
+        </div>
+      ))}
 
       {tab === "bord" && <SalesPipeline onOpen={onOpen} onCard={(id) => openKlantCard(id)} summary={false} />}
 

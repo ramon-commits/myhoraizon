@@ -13,6 +13,7 @@ import { IrisVoorstellen } from './dashboard.jsx'
 import { VoorstellenWidget, SnelleActiesWidget } from './vandaag.jsx'
 import { TakenLogWidget } from './takenlog.jsx'
 import { IrisChat, IrisBriefing, IrisFlags } from './iris.jsx'
+import { SaleskansenWidget, PipelineTakenWidget } from './salestasks.jsx'
 
 const { useState, useRef, useEffect, useCallback } = React
 
@@ -301,10 +302,10 @@ function TileBody({ m, size, onOpen, count, view, edit }) {
     return <div className="voorstel-tile" onClick={(e) => e.stopPropagation()}>{<VoorstellenWidget size={size} view={view} onOpen={onOpen || (() => {})} scope={m.scope || "sales"} />}</div>;
   }
   if (m.tileKind === "saleskansen") {
-    return window.SaleskansenWidget ? React.createElement(window.SaleskansenWidget, { onOpen: onOpen || (() => {}) }) : null;
+    return <SaleskansenWidget onOpen={onOpen || (() => {})} />;
   }
   if (m.tileKind === "pipelinetaken") {
-    return window.PipelineTakenWidget ? React.createElement(window.PipelineTakenWidget, { size, view, onOpen: onOpen || (() => {}) }) : null;
+    return <PipelineTakenWidget size={size} view={view} onOpen={onOpen || (() => {})} />;
   }
   if (m.tileKind === "relatietaken") {
     return window.RelatieTakenWidget ? React.createElement(window.RelatieTakenWidget, { size, view, onOpen: onOpen || (() => {}) }) : null;

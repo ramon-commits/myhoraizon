@@ -329,7 +329,7 @@ function IrisChat({ showActions, autoFocus = true }) {
       <div className="ichat-input">
         <input value={val} placeholder="Vraag of vertel Iris iets…" onChange={(e) => setVal(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && send()} autoFocus={autoFocus} />
-        <button className="send-btn" onClick={() => send()}><span dangerouslySetInnerHTML={{ __html: ICONS("send", { sw: 1.8 }) }} /></button>
+        <button className="send-btn" aria-label="Verstuur" title="Verstuur" disabled={!val.trim()} onClick={() => send()}><span dangerouslySetInnerHTML={{ __html: ICONS("send", { sw: 1.8 }) }} /></button>
       </div>
     </div>
   )
