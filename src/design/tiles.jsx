@@ -13,7 +13,7 @@ import { IrisVoorstellen } from './dashboard.jsx'
 import { VoorstellenWidget, SnelleActiesWidget } from './vandaag.jsx'
 import { TakenLogWidget } from './takenlog.jsx'
 import { IrisChat, IrisBriefing, IrisFlags } from './iris.jsx'
-import { SaleskansenWidget, PipelineTakenWidget } from './salestasks.jsx'
+import { SaleskansenWidget, PipelineTakenWidget, RelatieTakenWidget } from './salestasks.jsx'
 
 const { useState, useRef, useEffect, useCallback } = React
 
@@ -308,7 +308,7 @@ function TileBody({ m, size, onOpen, count, view, edit }) {
     return <PipelineTakenWidget size={size} view={view} onOpen={onOpen || (() => {})} />;
   }
   if (m.tileKind === "relatietaken") {
-    return window.RelatieTakenWidget ? React.createElement(window.RelatieTakenWidget, { size, view, onOpen: onOpen || (() => {}) }) : null;
+    return <RelatieTakenWidget size={size} view={view} onOpen={onOpen || (() => {})} />;
   }
   if (m.tileKind === "snelacties") {
     return <div className="snelacties-tile" onClick={(e) => e.stopPropagation()}>{<SnelleActiesWidget onOpen={onOpen || (() => {})} />}</div>;

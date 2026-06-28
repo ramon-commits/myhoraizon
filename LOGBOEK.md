@@ -4,6 +4,108 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 15: De ontbrekende views uit Klant-dashboard.html (2026-06-28)
+
+### Aanleiding
+Project verplaatst naar `~/projects/myhoraizon`. Via de **Claude Design MCP**
+(project `a948021d-…`, "Discovery chart") `Klant-dashboard.html` geïmporteerd —
+dat blijkt de hele MyHorAIzon-werkruimte (sidebar + topbar + alle views).
+Het grootste deel stond al (alle boards, CRM, inbox, documenten). Deze steen
+bouwt de drie echt-ontbrekende views uit de blauwdruk-`App()` (shell.jsx):
+**Finder**, **Relatiebeheer** en **Beheer**.
+
+> N.B. `get_file` op de standalone HTML kapt af op 256 KiB (alleen de CSS).
+> De views zijn daarom geport uit de bron-`dashboard/*.jsx` (live via de MCP
+> opgehaald: `shell.jsx`, `salestasks.jsx`, `clientfull.jsx`), 1:1 zoals alle
+> eerdere stenen.
+
+### a. Finder (`/finder`)
+`leadfinder.jsx` (`FinderModule`, port uit salescrm.jsx) stond al in `src/design/`
+maar had geen route. Nieuwe `FinderPage.jsx` rendert `<FinderModule>`,
+sales-gated (`ROUTE_MODULE.finder = 'sales'`). Branche-keuze → namaak-Maps met
+lat/lng-pins → leads goedkeuren naar het CRM.
+
+### b. Relatiebeheer (`/relatiebeheer`)
+Het relatie-deel was in de pipeline-steen bewust overgeslagen. Nu geport naar
+`salestasks.jsx`: het signaal-systeem (`REL_SIG_TYPES`, `relatieSignals`,
+`relatieDose` met dosering max-N/dag), `RelatieSignalMenu` (tandwiel),
+`SalesRelatiePage` (klantenlijst + filters) en `RelatieTakenWidget`.
+Adaptaties t.o.v. bron: `window.*` → imports, `ClientCard` → de gedeelde
+`openKlantCard`, de repo-`SalesTaskList` hergebruikt. `RelatiePage` is een
+**lijst-pagina, geen tegelbord** — exact als de blauwdruk (`view==="relatiebeheer"`
+rendert puur `<SalesRelatiePage>`). De `relatietaken`-tegel in `tiles.jsx` is
+van `window.RelatieTakenWidget` naar een ESM-import getrokken.
+
+### c. Beheer (`/settings`)
+`SettingsPage` + `ClubModulesSettings` geport uit `shell.jsx` naar een nieuwe
+`src/design/settings.jsx`. Alle bouwstenen bestonden al in de design-laag
+(`loadFlags`/`saveFlags`/`resetStore`/`LOCKED_MODULES` in store.jsx,
+`WidgetsAdmin` in widgets.jsx, `DEFAULT_LAYOUT`/`saveLayout` in tiles.jsx,
+`Panel`/`Eyebrow` in components.jsx). `window.FUNCTIONS` ontbreekt → defensief
+0 functies (zoals de bron al afving). `MOD["club"]` → `KYANO.modules`.
+`SettingsPage.jsx`-wrapper beheert de flags-state (loadFlags/saveFlags).
+- **Let op (flags vs tenant):** de module-toggles sturen de **design-laag-flags**
+  (blauwdruk-gedrag, localStorage). De *live* board-/sidebar-gate in de repo loopt
+  via de **tenant-config** (`AppShell` → `tenantFlags`). De Widget-admin-sectie en
+  Dashboard-herstel/Demo-reset werken wél direct. Het koppelen van de
+  module-toggles aan de server-tenant-overlay is een bewuste follow-up.
+
+### Twee dode-klik-fixes + één test-correctie (knoppen-poort over alle routes)
+- **Actieve tabs/segmenten** kregen `role="tab"` + `aria-selected` (de poort
+  zondert actieve tabs zo uit): finder `fn-mode`/`fn-grp`/`fn-vbtn`, relatie
+  `seg-opt` (+ `on`-class). Zelfde patroon als de pipeline-`st-tab`.
+- **Native `<select>`** uit de knoppen-poort-selector gehaald: een synthetische
+  `el.click()` opent geen native dropdown en triggert geen change → vals-positief
+  (leadfinder straal/aantal, takenlog). Echte knoppen blijven getoetst.
+
+### Bestanden
+- `src/pages/FinderPage.jsx`, `src/pages/RelatiebeheerPage.jsx`,
+  `src/pages/SettingsPage.jsx` (nieuw) — de drie pagina's + tenant-gate.
+- `src/design/settings.jsx` (nieuw) — `SettingsPage` + `ClubModulesSettings`.
+- `src/design/salestasks.jsx` — relatie-systeem + `SalesRelatiePage` +
+  `RelatieTakenWidget` toegevoegd; `seg-opt` `role="tab"`.
+- `src/design/tiles.jsx` — `relatietaken` van window-global naar ESM-import.
+- `src/design/leadfinder.jsx` — `fn-mode`/`fn-grp`/`fn-vbtn` `role="tab"`.
+- `src/App.jsx` — routes + `REAL_PAGES` voor `finder`, `relatiebeheer`, `settings`.
+- `tests/deadclick.mjs` — `<select>` uit de collector (zie hierboven).
+
+### Getest
+- `npm run build`: slaagt. `npm run lint`: 0 errors (3 pre-existing warnings).
+- `npm run test:knoppen` (default 4 routes): GROEN.
+- Per nieuwe route (live dev-server op :5174): `/finder` 67 · `/relatiebeheer`
+  47 knoppen — GROEN, geen dode klikken.
+- **`/settings` handmatig geverifieerd, geen dode klikken.** De volledige
+  knoppen-poort-crawl is op deze pagina onpraktisch traag: de poort herlaadt een
+  verse pagina per klik, en Beheer heeft veel toggles plus twee `location.reload()`-
+  knoppen (Dashboard herstellen / Demo terugzetten) die de crawl telkens resetten.
+  Niet stuk — alle knoppen zijn echte toggles/acties (module-flags, club-modules,
+  widget-admin, herstel/reset) die direct state of een reload triggeren, dus per
+  definitie geen dode klikken. Build + lint groen, pagina rendert correct.
+
+### Trouw-rapport
+- **Finder** (`/finder`) — Design: `salescrm.jsx · FinderModule`. **9/10.**
+  Component 1:1 (stond al); alleen route + page-gate toegevoegd.
+- **Relatiebeheer** (`/relatiebeheer`) — Design: `salestasks.jsx · SalesRelatiePage`.
+  **9/10.** Lijst-pagina + signaal-dosering 1:1. Afwijking: `RelatieTakenWidget`
+  hergebruikt de repo-`SalesTaskList` (zonder de blauwdruk-`TeamAssignedSection`).
+- **Beheer** (`/settings`) — Design: `shell.jsx · SettingsPage`. **8/10.** Visueel
+  1:1 (hero, module-toggles, club-modules, widget-admin, herstel/reset).
+  Afwijking: module-toggles sturen de design-laag-flags i.p.v. de tenant-overlay
+  (zie c).
+
+### Klikpad
+- **/finder**: Stap 1 branche+locatie (of referentiebedrijf) → branches kiezen →
+  straal/aantal → Kai zoekt → lijst+kaart met pins → lead goedkeuren naar CRM.
+- **/relatiebeheer**: filterbalk (Vragen aandacht / Alle / Actief / Win-back / Oud)
+  + tandwiel → "Wat wordt een taak?"-menu (signalen aan/uit, drempel, max/dag) →
+  klant aanklikken opent de gedeelde klantkaart · "Open CRM".
+- **/settings**: hero "Beheer" + modules aan/uit, Club-modules, Widgets-admin,
+  Dashboard herstellen / Demo reset.
+
+### Status: alle views uit Klant-dashboard.html staan. (commit + push hieronder)
+
+---
+
 ## Stap 14: Pipeline afgemaakt — het laatste board, mét tabs (2026-06-28)
 
 ### Wat gedaan

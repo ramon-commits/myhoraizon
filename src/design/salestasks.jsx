@@ -13,11 +13,12 @@ import { KYANO } from './data'
 import { useStore, setState, toast, confirmAsk, Modal } from './store.jsx'
 import { AC, ACsoft, Avatar, Btn } from './components.jsx'
 import { allCustomers } from './customers.js'
-import { SALES_PIPELINE, dealStage, stageByKey, stageTarget, daysSinceContact, custIdleMonths, eur, addCustLog, SalesPipeline, NewDealModal, PipelineFlowEditor } from './sales.jsx'
+import { SALES_PIPELINE, dealStage, stageByKey, stageTarget, daysSinceContact, custIdleMonths, eur, addCustLog, SalesPipeline, NewDealModal, PipelineFlowEditor, custAttention, custIdleLabel, riskValue, StatusDot } from './sales.jsx'
 import { ObjectActions, openKlantCard } from './objectactions.jsx'
 import { SnoozeMenu } from './iris.jsx'
+import { useSmartMenu } from './menus'
 
-const { useState, useMemo } = React
+const { useState, useMemo, useEffect } = React
 
 /* ---------- inkomende saleskansen (wachten op goedkeuring) ---------- */
 const INCOMING_LEADS = [
@@ -384,4 +385,292 @@ function SalesPipelinePage({ onOpen, tab: tabProp, onTab, vandaagSlot }) {
   )
 }
 
-export { SalesPipelinePage, SaleskansenWidget, PipelineTakenWidget, pipelineTasks, incomingLeads }
+/* ============================================================
+   RELATIEBEHEER — instelbare, gedoseerde signalen uit CRM-analyse.
+   ESM-port van de Claude Design-blauwdruk (dashboard/salestasks.jsx):
+   window-globals -> imports; ClientCard -> de gedeelde openKlantCard.
+   ============================================================ */
+const REL_SIG_TYPES = [
+  { key: "stil",     label: "Klant stil gevallen",          desc: "Actieve klant zonder contact in de tijdlijn",      accent: "orange", icon: "clock",   threshold: 60,   on: true },
+  { key: "winback",  label: "Win-back kans",                desc: "Oud-klant die opnieuw benaderd kan worden",        accent: "red",    icon: "refresh", threshold: null, on: true },
+  { key: "occasion", label: "Jaarlijks moment",             desc: "Verjaardag of seizoen uit het klantprofiel",       accent: "gold",   icon: "trophy",  threshold: null, on: true },
+  { key: "deal",     label: "Deal te lang open",            desc: "Lopende deal zonder beweging in de tijdlijn",      accent: "navy",   icon: "bell",    threshold: 21,   on: true },
+  { key: "offerte",  label: "Openstaande offerte",          desc: "Verstuurde offerte zonder reactie",                accent: "gold",   icon: "doc",     threshold: 10,   on: true },
+  { key: "factuur",  label: "Factuur over vervaldatum",     desc: "Openstaande factuur voorbij de vervaldatum",       accent: "orange", icon: "invoice", threshold: 14,   on: true },
+  { key: "review",   label: "Opdracht afgerond → review", desc: "Recent afgeronde opdracht, vraag om een review", accent: "green",  icon: "star",    threshold: null, on: true },
+]
+const REL_SIG_BY = {}; REL_SIG_TYPES.forEach((t) => { REL_SIG_BY[t.key] = t })
+function relSigOn(store, key)   { return store.get("rel.sig." + key + ".on", REL_SIG_BY[key].on) }
+function relSigDays(store, key) { return store.get("rel.sig." + key + ".days", REL_SIG_BY[key].threshold) }
+function relDose(store)         { return store.get("rel.dose", 5) }
+
+/* demo-backing voor signaal-typen zonder eigen klantveld (factuur/review/occasion-curatie).
+   Bij de overzet naar code komen deze uit de facturen-, project- en agenda-data. */
+const REL_INVOICE = { c_nieuwevaart: { amount: 1450, over: 19 }, c_pllek: { amount: 880, over: 9 } }
+const REL_REVIEW  = { c_hoxton: { what: "de borrel van vorige week" } }
+const REL_OCCASION = {
+  p_lisa:    { title: "Verjaardags-sloeptocht · Lisa de Vries", why: "Boekt elk jaar in juni een sloeptocht voor haar verjaardag. Stuur nu proactief de nieuwe vaarroute, voordat ze er zelf om vraagt." },
+  c_okura:   { title: "10e teamuitje · Hotel Okura", why: "Net hun 10e boeking in 4 jaar trouwe afname. Een attentie plus een jaarcontract-voorstel met korting beloont de trouw en bindt ze langer." },
+  c_haarlem: { title: "Najaarsarrangement · Brouwerij Jopen", why: "Boekt seizoensgebonden. Het najaar komt eraan, herinner ze nu er nog plek is, voordat een concurrent erbij is." },
+}
+
+/* alle gedetecteerde signalen (drempel gehaald), elk met type + aan/uit-vlag. */
+function relatieSignals(store) {
+  const custs = allCustomers(store)
+  const by = (id) => custs.find((c) => c.id === id)
+  const out = []
+  const push = (type, c, x, priority) => {
+    const m = REL_SIG_BY[type]
+    out.push({ type, id: "rt_" + type + "_" + c.id, cust: c.id, enabled: relSigOn(store, type),
+      icon: m.icon, accent: m.accent, signal: m.label, from: x.from || "Iris", agent: x.agent || "iris",
+      urgent: !!x.urgent, title: x.title, why: x.why, cta: x.cta, did: x.did, logType: x.logType || "note",
+      priority: priority || 0, statusInfo: x.statusInfo || "" })
+  }
+
+  custs.forEach((c) => {
+    const since = daysSinceContact(store, c)
+    const months = custIdleMonths(store, c)
+    const yearly = (c.monthly || 0) * 12
+
+    if (c.status === "active" && since >= relSigDays(store, "stil") && since < 9000) {
+      push("stil", c, { from: "Iris", agent: "iris", urgent: months >= 3, logType: "call",
+        title: "Even inchecken · " + c.name,
+        why: months + (months === 1 ? " maand" : " maanden") + " geen contact in de tijdlijn, terwijl ze normaal vaker bestellen. Een after-sales belletje voorkomt stilletjes afhaken.",
+        cta: "Check-in plannen", did: "Check-in ingepland voor " + c.name, statusInfo: since + " dgn stil" }, yearly + since * 8)
+    }
+    if (c.status === "win-back" || c.status === "old") {
+      push("winback", c, { from: "Iris", agent: "iris", urgent: false, logType: "mail",
+        title: "Win-back kans · " + c.name,
+        why: (c.churn ? c.churn + ". " : "") + months + " maanden stil. " + (c.iris || "Een persoonlijke win-back-mail kost niets en kan de relatie heropenen."),
+        cta: "Win-back mail klaarzetten", did: "Win-back mail klaargezet voor " + c.name, statusInfo: "winbaar" }, riskValue(store, c) || 6000)
+    }
+    const occ = REL_OCCASION[c.id] || (c.occasion ? { title: "Jaarlijks moment · " + c.name, why: c.occasion + ". Stuur proactief een herinnering; een persoonlijk bericht op het juiste moment maakt het verschil." } : null)
+    if (occ && c.status !== "win-back" && c.status !== "old") {
+      push("occasion", c, { from: "Iris", agent: "iris", urgent: false, logType: "mail",
+        title: occ.title, why: occ.why, cta: "Herinnering klaarzetten", did: "Herinnering klaargezet voor " + c.name, statusInfo: "jaarlijks" }, 2000 + yearly * 0.2)
+    }
+    const inv = REL_INVOICE[c.id]
+    if (inv && inv.over >= relSigDays(store, "factuur")) {
+      push("factuur", c, { from: "Juris", agent: "juris", urgent: true, logType: "mail",
+        title: "Factuur over datum · " + c.name,
+        why: eur(inv.amount) + " staat " + inv.over + " dagen over de vervaldatum. Een vriendelijke herinnering nu voorkomt dat het verder uitloopt.",
+        cta: "Herinnering sturen", did: "Betaalherinnering klaargezet voor " + c.name, statusInfo: inv.over + " dgn over datum" }, inv.amount * 4)
+    }
+    const rv = REL_REVIEW[c.id]
+    if (rv) {
+      push("review", c, { from: "Iris", agent: "iris", urgent: false, logType: "mail",
+        title: "Vraag een review · " + c.name,
+        why: rv.what.charAt(0).toUpperCase() + rv.what.slice(1) + " is net afgerond. Vraag nu om een review nu de ervaring vers is, dan is de kans op een mooie beoordeling het grootst.",
+        cta: "Review-verzoek klaarzetten", did: "Review-verzoek klaargezet voor " + c.name, statusInfo: "net afgerond" }, 1500 + yearly * 0.1)
+    }
+  })
+
+  const deals = [...store.get("pipe.deals", []), ...SALES_PIPELINE]
+    .map((d) => ({ ...d, stage: dealStage(store, d) }))
+    .filter((d) => d.stage !== "gewonnen")
+  deals.forEach((d) => {
+    const c = by(d.cust); if (!c || c.status !== "active") return
+    const since = daysSinceContact(store, c)
+    if (d.stage === "offerte") {
+      if (since < relSigDays(store, "offerte")) return
+      push("offerte", c, { from: "Hugo", agent: "hugo", urgent: true, logType: "mail",
+        title: "Offerte opvolgen · " + c.name,
+        why: eur(d.value) + " verstuurd en " + since + " dagen geen reactie. Een korte check verhoogt de kans op akkoord.",
+        cta: "Reminder sturen", did: "Reminder klaargezet voor " + c.name, statusInfo: since + " dgn open" }, d.value || 1000)
+    } else {
+      if (since < relSigDays(store, "deal")) return
+      const st = stageByKey(store, d.stage)
+      push("deal", c, { from: "Hugo", agent: "hugo", urgent: true, logType: "call",
+        title: "Deal loopt vast · " + c.name,
+        why: eur(d.value) + " staat " + since + " dagen stil in “" + (st ? st.label : d.stage) + "”. Bel om de deal weer in beweging te krijgen.",
+        cta: "Bel nu", did: "Belactie genoteerd voor " + c.name, statusInfo: since + " dgn stil" }, (d.value || 1000) + since * 6)
+    }
+  })
+
+  return out
+}
+
+/* dosering: enabled signalen, belangrijkste eerst, max N open-taken per dag. */
+function relatieDose(store) {
+  const all = relatieSignals(store)
+  const enabled = all.filter((s) => s.enabled)
+  const off = all.filter((s) => !s.enabled)
+  const isDone = (id) => store.get("stask.rel." + id, 0)
+  const openE = enabled.filter((s) => !isDone(s.id)).sort((a, b) => b.priority - a.priority)
+  const resolved = enabled.filter((s) => isDone(s.id))
+  const dose = relDose(store)
+  return { all, off, dose, resolved, tasks: openE.slice(0, dose), waiting: openE.slice(dose) }
+}
+function relatieTasks(store) { const d = relatieDose(store); return [...d.tasks, ...d.resolved] }
+
+/* "Wat wordt een taak?" — stappers + signaal-instelmenu achter het tandwiel. */
+function RelStep({ value, onDec, onInc, min }) {
+  return (
+    <div className="rsig-step">
+      <button type="button" onClick={onDec} disabled={min != null && value <= min}>&minus;</button>
+      <span>{value}</span>
+      <button type="button" onClick={onInc}>+</button>
+    </div>
+  )
+}
+function RelatieSignalMenu({ store }) {
+  const smRef = useSmartMenu({ align: "end", margin: 12 })
+  const d = relatieDose(store)
+  const dose = relDose(store)
+  const setOn = (k, v) => setState("rel.sig." + k + ".on", v)
+  const setDays = (k, v) => setState("rel.sig." + k + ".days", Math.max(1, v))
+  const setDose = (v) => setState("rel.dose", Math.max(1, v))
+  const taskN = d.tasks.length, waitN = d.waiting.length, offN = d.off.length
+  const soft = [...d.waiting.map((s) => ({ ...s, _st: "wait" })), ...d.off.map((s) => ({ ...s, _st: "off" }))]
+  const custs = allCustomers(store)
+  return (
+    <div className="rel-setmenu" ref={smRef} onClick={(e) => e.stopPropagation()} onPointerDown={(e) => e.stopPropagation()}>
+      <div className="rel-setmenu-head">
+        <div>
+          <div className="rel-setmenu-title">Wat wordt een taak?</div>
+          <div className="rel-setmenu-sub mono">Jij doseert welke signalen in Vandaag komen</div>
+        </div>
+        <div className="rsig-dose"><span className="rsig-dose-l mono">Max/dag</span><RelStep value={dose} min={1} onDec={() => setDose(dose - 1)} onInc={() => setDose(dose + 1)} /></div>
+      </div>
+      <div className="rel-setmenu-body">
+        <div className="rsig-list">
+          {REL_SIG_TYPES.map((t) => { const on = relSigOn(store, t.key); return (
+            <div className={"rsig-row" + (on ? "" : " off")} key={t.key}>
+              <span className="rsig-ic" style={{ color: AC(t.accent), background: ACsoft(t.accent) }} dangerouslySetInnerHTML={{ __html: ICONS(t.icon, { sw: 2 }) }} />
+              <div className="rsig-main"><div className="rsig-name">{t.label}</div><div className="rsig-desc mono">{t.desc}</div></div>
+              {t.threshold != null && on && (
+                <div className="rsig-thr"><span className="mono">na</span><RelStep value={relSigDays(store, t.key)} min={1} onDec={() => setDays(t.key, relSigDays(store, t.key) - 1)} onInc={() => setDays(t.key, relSigDays(store, t.key) + 1)} /><span className="mono">dgn</span></div>
+              )}
+              <button type="button" className={"rsig-tog" + (on ? " on" : "")} role="switch" aria-checked={on} aria-label={t.label} onClick={() => setOn(t.key, !on)}><span className="rsig-knob" /></button>
+            </div>
+          ) })}
+        </div>
+        <div className="rsig-summary">
+          <span className="rsig-chip task"><b>{taskN}</b> word{taskN === 1 ? "t" : "en"} taak</span>
+          <span className="rsig-chip wait"><b>{waitN}</b> wacht{waitN === 1 ? "" : "en"}</span>
+          <span className="rsig-chip off"><b>{offN}</b> uit</span>
+        </div>
+        {soft.length > 0 && (
+          <div className="rel-setmenu-soft">
+            <div className="rsig-soft-hint mono">Zachte signalen · vullen Vandaag niet</div>
+            <div className="rsig-soft">
+              {soft.map((s) => { const c = custs.find((x) => x.id === s.cust); const m = REL_SIG_BY[s.type]; return (
+                <div className="rsig-soft-row" key={s.id}>
+                  <span className="rsig-soft-dot" style={{ background: AC(m.accent) }} />
+                  <div className="rsig-soft-main"><b>{c ? c.name : s.cust}</b><span className="mono">{m.label}{s.statusInfo ? " · " + s.statusInfo : ""}</span></div>
+                  <span className={"rsig-soft-badge " + s._st}>{s._st === "off" ? "Uitgezet" : "Wacht"}</span>
+                </div>
+              ) })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+/* Relatiebeheer-pagina: stille titelbalk, filter-rij met tandwiel, klantenlijst. */
+function SalesRelatiePage({ onOpen }) {
+  const store = useStore()
+  const [filter, setFilter] = useState("aandacht")
+  const [setOpen, setSetOpen] = useState(false)
+  useEffect(() => {
+    if (!setOpen) return
+    const close = () => setSetOpen(false)
+    window.addEventListener("pointerdown", close)
+    return () => window.removeEventListener("pointerdown", close)
+  }, [setOpen])
+
+  const custs = allCustomers(store).filter((c) => c.status !== "prospect")
+  const activeN = custs.filter((c) => c.status === "active").length
+  const activeVal = custs.filter((c) => c.status === "active").reduce((s, c) => s + c.monthly, 0)
+  const attention = custs.filter((c) => custAttention(store, c))
+
+  const FILTERS = [["aandacht", "Vragen aandacht"], ["", "Alle klanten"], ["active", "Actief"], ["win-back", "Win-back"], ["old", "Oud"]]
+  let list = custs
+  if (filter === "aandacht") list = list.filter((c) => custAttention(store, c))
+  else if (filter) list = list.filter((c) => c.status === filter)
+  list = [...list].sort((a, b) => daysSinceContact(store, b) - daysSinceContact(store, a))
+
+  const onCard = (id) => openKlantCard(id, "Relatiebeheer")
+
+  return (
+    <div className="module-page" key="relatiebeheer">
+      <div className="page-head-bar">
+        <div className="phb-head">
+          <span className="phb-ic" style={{ color: AC("red"), background: ACsoft("red") }}><span dangerouslySetInnerHTML={{ __html: ICONS("people") }} /></span>
+          <div className="phb-id">
+            <div className="phb-title">Relatiebeheer</div>
+            <div className="phb-sub mono">{activeN} actieve klanten · {eur(activeVal)}/mnd · {attention.length} vragen aandacht</div>
+          </div>
+        </div>
+        <div className="phb-spacer" />
+        <div className="phb-actions">
+          <button className="tb-btn" onClick={() => onOpen("crm")}><span dangerouslySetInnerHTML={{ __html: ICONS("people", { sw: 2 }) }} />Open CRM</button>
+        </div>
+      </div>
+
+      <div className="rel-filterbar">
+        <div className="seg-pick">
+          {FILTERS.map(([k, lbl]) => <button key={k || "all"} role="tab" aria-selected={filter === k} className={"seg-opt" + (filter === k ? " on" : "")} style={filter === k ? { background: AC("red"), color: "#fff" } : null} onClick={() => setFilter(k)}>{lbl}</button>)}
+        </div>
+        <div className="phb-spacer" />
+        <div className="rel-set-wrap" onPointerDown={(e) => e.stopPropagation()}>
+          <button className={"rel-gear" + (setOpen ? " on" : "")} title="Signaal-instellingen" aria-label="Signaal-instellingen" onClick={() => setSetOpen((v) => !v)}><span dangerouslySetInnerHTML={{ __html: ICONS("sliders", { sw: 1.9 }) }} /></button>
+          {setOpen && <RelatieSignalMenu store={store} />}
+        </div>
+      </div>
+
+      <div className="sx-rel-list rel-page-list">
+        {list.length === 0 && <div className="sx-col-empty mono" style={{ padding: 28 }}>Geen klanten in deze weergave.</div>}
+        {list.map((c) => {
+          const att = custAttention(store, c)
+          return (
+            <div className={"sx-rel-row" + (att ? " att" : "")} key={c.id}>
+              <div className="sx-rel-lead" onClick={() => onCard(c.id)}>
+                <Avatar name={c.name} size={40} />
+                <div className="sx-rel-main">
+                  <div className="sx-rel-top"><b>{c.name}</b><StatusDot status={c.status} /></div>
+                  <div className="sx-rel-sub mono">{c.contact} · {c.city} · {c.monthly > 0 ? eur(c.monthly) + "/mnd" : "geen omzet"}</div>
+                </div>
+                <div className="sx-rel-idle">
+                  <span className={"sx-rel-idle-v mono" + (att ? " att" : "")}>{custIdleLabel(store, c)}</span>
+                  {att && c.churn && <span className="sx-rel-churn mono">{c.churn}</span>}
+                </div>
+                <span className="sx-rel-chev" dangerouslySetInnerHTML={{ __html: ICONS("arrow") }} />
+              </div>
+              <div className="sx-rel-objacts" onClick={(e) => e.stopPropagation()}>
+                <ObjectActions only={["vandaag", "assign", "klant"]} className="oa-compact"
+                  obj={{ type: "klant", key: "cust:" + c.id, title: c.name, accent: "red", custId: c.id, custName: c.name }} />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/* Widget: Relatie-taken, CRM-signalen (mijlpalen, after-sales, veranderingen) */
+function RelatieTakenWidget({ onOpen, view }) {
+  const store = useStore()
+  const dose = useMemo(() => relatieDose(store), [store])
+  const tasks = [...dose.tasks, ...dose.resolved]
+  const waitN = dose.waiting.length
+  return (
+    <div className="voorstel-tile" onClick={(e) => e.stopPropagation()}>
+      <div className="voorstel-widget">
+        <SalesTaskList tasks={tasks} storeKey="stask.rel" onCard={(id) => openKlantCard(id)} onOpen={onOpen} view={view}
+          emptyTitle="Geen signalen vandaag" emptySub="Iris meldt het zodra een klant aandacht nodig heeft." />
+        {waitN > 0 && (
+          <div className="rsig-wait-note mono" onClick={() => onOpen && onOpen("relatiebeheer")}>
+            <span dangerouslySetInnerHTML={{ __html: ICONS("clock", { sw: 2 }) }} />
+            Nog {waitN} {waitN === 1 ? "signaal wacht" : "signalen wachten"} op ruimte · Iris doseert op max {dose.dose}/dag. Werk een taak af om de volgende vrij te geven.
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+export { SalesPipelinePage, SalesRelatiePage, SaleskansenWidget, PipelineTakenWidget, RelatieTakenWidget, pipelineTasks, relatieTasks, incomingLeads }

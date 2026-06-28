@@ -84,7 +84,10 @@ const INPAGE = `
 function __vis(el){ const r=el.getBoundingClientRect(); if(r.width<2||r.height<2) return false; const s=getComputedStyle(el); if(s.visibility==='hidden'||s.display==='none'||s.opacity==='0') return false; return true; }
 function __label(el){ return (el.getAttribute('aria-label')||el.title||el.textContent||el.getAttribute('href')||'').replace(/\\s+/g,' ').trim().slice(0,70)||'(geen label)'; }
 function __collect(){
-  const sel='button,[role=button],[role=menuitem],[role=tab],a[href],input[type=checkbox],input[type=radio],select';
+  // <select> weggelaten: een native dropdown is altijd interactief, maar een
+  // synthetische el.click() opent 'm niet en triggert geen change → niet zinvol
+  // te toetsen met deze dode-klik-test (vals-positief). Echte knoppen wel.
+  const sel='button,[role=button],[role=menuitem],[role=tab],a[href],input[type=checkbox],input[type=radio]';
   return [...document.querySelectorAll(sel)].filter(el=>{
     if(el.disabled) return false;
     if(!__vis(el)) return false;

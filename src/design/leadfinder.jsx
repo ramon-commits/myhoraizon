@@ -209,10 +209,10 @@ export function FinderModule({ onOpen }) {
 
       <Panel wid="Zoeken" eyebrow="Stap 1 · branche & locatie" title="Waar zoek je naar?" accent="red">
         <div className="fn-modes">
-          <button type="button" className={"fn-mode" + (mode === "branche" ? " on" : "")} onClick={() => setMode("branche")}>
+          <button type="button" role="tab" aria-selected={mode === "branche"} className={"fn-mode" + (mode === "branche" ? " on" : "")} onClick={() => setMode("branche")}>
             <b>Branche + locatie</b><span className="mono">Kies branches uit de lijst en een gebied</span>
           </button>
-          <button type="button" className={"fn-mode" + (mode === "ref" ? " on" : "")} onClick={() => setMode("ref")}>
+          <button type="button" role="tab" aria-selected={mode === "ref"} className={"fn-mode" + (mode === "ref" ? " on" : "")} onClick={() => setMode("ref")}>
             <b>Referentiebedrijf</b><span className="mono">Kai leidt branches af uit een voorbeeld</span>
           </button>
         </div>
@@ -252,7 +252,7 @@ export function FinderModule({ onOpen }) {
             </div>
             {!query && (
               <div className="fn-groups">
-                {PLACE_GROUPS.map((grp, i) => <button type="button" key={grp.g} className={"fn-grp" + (activeGroup === i ? " on" : "")} onClick={() => setActiveGroup(i)}>{grp.g}</button>)}
+                {PLACE_GROUPS.map((grp, i) => <button type="button" role="tab" aria-selected={activeGroup === i} key={grp.g} className={"fn-grp" + (activeGroup === i ? " on" : "")} onClick={() => setActiveGroup(i)}>{grp.g}</button>)}
               </div>
             )}
             <div className="fn-pick-list">
@@ -292,7 +292,7 @@ export function FinderModule({ onOpen }) {
       {phase === "results" && leads.length > 0 && (
         <Panel wid="Resultaten" eyebrow={"Stap 2 · " + leads.length + " gevonden" + (enriching ? " · e-mails laden…" : "")} title="Gevonden leads" accent="red" pad={false}
           right={<div className="fn-viewseg">
-            {[["lijst", "Lijst"], ["kaart", "Kaart"], ["beide", "Beide"]].map(([v, l]) => <button type="button" key={v} className={"fn-vbtn" + (view === v ? " on" : "")} onClick={() => setView(v)}>{l}</button>)}
+            {[["lijst", "Lijst"], ["kaart", "Kaart"], ["beide", "Beide"]].map(([v, l]) => <button type="button" role="tab" aria-selected={view === v} key={v} className={"fn-vbtn" + (view === v ? " on" : "")} onClick={() => setView(v)}>{l}</button>)}
           </div>}>
           <div className="fn-api-note mono">includedTypes → [{types.map((k) => '"' + k + '"').join(", ")}]{mode === "branche" && locatie.trim() ? "  ·  " + locatie.trim() + " · " + straal + " km" : ""}</div>
           <div className={"fn-results fn-view-" + view}>
