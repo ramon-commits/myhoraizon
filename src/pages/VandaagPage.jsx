@@ -7,9 +7,13 @@ import { useOutletContext } from 'react-router-dom'
 import { ICONS } from '../design/icons'
 import { VandaagBoardHeader } from '../design/vandaag.jsx'
 import { TileGrid } from '../design/tiles.jsx'
+import { useModuleSettings } from '../tenant/TenantProvider'
+import ModuleOff from '../tenant/ModuleOff'
 
 export default function VandaagPage() {
   const { edit, layout, setLayout, openLib, go, flags, board } = useOutletContext()
+  const { enabled } = useModuleSettings('vandaag')
+  if (!enabled) return <ModuleOff label="Vandaag" />
 
   return (
     <div className="dash vandaag-board">

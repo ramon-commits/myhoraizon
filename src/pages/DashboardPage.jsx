@@ -5,9 +5,14 @@ import { useOutletContext } from 'react-router-dom'
 import { ICONS } from '../design/icons'
 import { Greeting } from '../design/dashboard.jsx'
 import { TileGrid } from '../design/tiles.jsx'
+import { useModuleSettings } from '../tenant/TenantProvider'
+import ModuleOff from '../tenant/ModuleOff'
 
 export default function DashboardPage() {
   const { edit, layout, setLayout, openLib, go, flags, board } = useOutletContext()
+  // aan/uit uit de tenant-config (SEAM: settings vult het brein later)
+  const { enabled } = useModuleSettings('dashboard')
+  if (!enabled) return <ModuleOff label="Dashboard" />
 
   return (
     <div className="dash">

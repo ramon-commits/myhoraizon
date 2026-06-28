@@ -282,7 +282,7 @@ function AccountMenu({ go, onLogout }) {
   )
 }
 
-export function TopBar({ view, go, edit, setEdit, onReset, openLib, flags, onLogout, isBoard }) {
+export function TopBar({ view, go, edit, setEdit, onReset, openLib, flags, onLogout, isBoard, tenantSwitcher }) {
   const crumb = view === 'dashboard' ? 'Dashboard' : view === 'iris' ? 'Iris' : view === 'settings' ? 'Beheer' : (MOD[view] ? MOD[view].name : view)
   return (
     <header className="topbar">
@@ -293,6 +293,7 @@ export function TopBar({ view, go, edit, setEdit, onReset, openLib, flags, onLog
           </button>
         )}
         <span className="tb-crumb mono"><span className="crumb-co">{KYANO.client.company}</span> · {crumb}</span>
+        {tenantSwitcher}
       </div>
       <div className="tb-mid"><TopSearch go={go} flags={flags} /></div>
       <div className="tb-actions">

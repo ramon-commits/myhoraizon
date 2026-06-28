@@ -4,6 +4,58 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 10: Tenant-ruggengraat (dun) (2026-06-28)
+
+### Vormen 1:1 gespiegeld uit horaizon-brain
+- **Tenant-vorm** (`src/tenant/tenants.js`): `{ id, slug, display_name, package,
+  active_agents[], custom_modules[], status, primary_contact_email,
+  primary_contact_name, horaizon_org_id, metadata }` + per tenant een
+  `module_settings`-overlay `{ [key]: { enabled, settings } }`. 2 demo-tenants:
+  Sloepenspel Amsterdam (enterprise, alle customs) en Kapsalon Knip & Co
+  (starter, alleen sales+contracts).
+- **MODULES-registry** (`src/tenant/modules.js`): `{ key, kind:'core'|'custom',
+  label, route }`. Core-set gespiegeld (dashboard, settings, iris, clients, team,
+  library, radar, patterns) + myhoraizon-core (vandaag, postvak). Custom: sales,
+  website, social, contracts, club, events.
+- **checkModuleAccess** (`src/tenant/access.js`): brein-regel exact
+  `allowed = isCore(key) || tenant.custom_modules.includes(key)`, output-vorm
+  identiek aan de edge-fn `{ allowed, reason, module_kind }`.
+- **TenantProvider** (`src/tenant/TenantProvider.jsx`): interface exact
+  `{ tenants, activeTenantId, activeTenant, switchTenant, isLoading }`,
+  `activeTenantId` in localStorage `kyano:active-tenant-id`, default null
+  (CEO-allesweergave). `useModuleSettings(key)` voor de overlay.
+
+### Seam (later vastklikken)
+- `access.js`: achter `USE_BRAIN` (nu `false`) — LATER
+  `supabase.functions.invoke('check-route-access')` met identieke input/output.
+- `TenantProvider`: `tenants` komt nu uit `tenants.js` — LATER customer-flow
+  `list_tenants`. Interface blijft identiek.
+
+### Bedrading
+- `TenantSwitcher` in de topbar (Alle/CEO + tenants); switchen verandert direct
+  de zichtbare modules.
+- `ModuleGate` wrapt de Outlet: route → module-key → checkModuleAccess. allowed
+  → pagina; `module_not_enabled` → 403-paneel (blueprint-tokens). CEO → altijd.
+- Sidebar leest dezelfde tenant-config (verbergt uitgezette custom-modules) via
+  de bestaande `flags`-seam — cosmetisch; ModuleGate is de echte poort.
+- De 3 modules (dashboard, vandaag, postvak) lezen hun aan/uit via
+  `useModuleSettings` i.p.v. hardcoded (ModuleOff bij uit).
+
+### Bewuste beperkingen
+- Demo-tenants, `USE_BRAIN=false`, geen Beheer-UI om custom_modules te wijzigen.
+- Breadcrumb-bedrijfsnaam komt nog uit de design-data (KYANO), niet uit de
+  actieve tenant (cosmetisch).
+
+### Getest
+- `npm run build` + `npm run lint`: groen. `npm run test:knoppen`: groen
+  (66 knoppen, 4 routes; TenantSwitcher meegeteld, geen dode klikken).
+- Headless geverifieerd: tenant 2 actief → sidebar zonder Website/Social/Club,
+  `/social` toont het 403-paneel met de exacte reason/module/kind.
+
+### Status: tenant-seam klaar; klikt later vast op het brein.
+
+---
+
 ## Stap 9: Knoppen-poort + dode-klik-test (2026-06-28)
 
 ### Wat gebouwd (kwaliteitslaag, geen nieuwe features)

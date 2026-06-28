@@ -5,6 +5,23 @@ import { Sidebar, TopBar } from '../design/shell.jsx'
 import { ToastHost, ConfirmHost, toast } from '../design/store.jsx'
 import { loadLayout, saveLayout, buildDefault, WidgetLibrary, BOARDS } from '../design/tiles.jsx'
 import IrisChatPanel from './IrisChatPanel'
+import { useTenant } from '../tenant/TenantProvider'
+import { MODULES } from '../tenant/modules'
+import { checkModuleAccess } from '../tenant/access'
+import ModuleGate from '../tenant/ModuleGate'
+import TenantSwitcher from '../tenant/TenantSwitcher'
+
+// Sidebar-flags uit dezelfde tenant-config als de ModuleGate (één bron).
+// Verberg custom-modules die niet aanstaan voor de actieve tenant (cosmetisch);
+// de gate is de echte poort. CEO (null) → niets verbergen.
+function tenantFlags(activeTenant) {
+  const flags = {}
+  if (!activeTenant) return flags
+  for (const m of MODULES) {
+    if (m.kind === 'custom' && !checkModuleAccess(activeTenant, m.key).allowed) flags[m.route] = false
+  }
+  return flags
+}
 
 // AppShell: de werkruimte-shell uit de Claude Design-blauwdruk (app.jsx).
 // Sidebar + topbar + scroll-container; de pagina rendert via <Outlet/>.
@@ -12,6 +29,7 @@ import IrisChatPanel from './IrisChatPanel'
 // en de widget-markt leven hier en gaan via Outlet-context naar de board-pagina.
 export default function AppShell() {
   const { email, signOut } = useAuth()
+  const { activeTenant } = useTenant()
   const navigate = useNavigate()
   const location = useLocation()
   const [edit, setEdit] = useState(false)
@@ -47,8 +65,8 @@ export default function AppShell() {
     toast('Indeling hersteld', { icon: 'refresh' })
   }
 
-  // flags leeg = alle modules zichtbaar (feature-flags-UI volgt later)
-  const flags = {}
+  // sidebar-flags uit de actieve tenant (CEO → alles zichtbaar)
+  const flags = useMemo(() => tenantFlags(activeTenant), [activeTenant])
 
   return (
     <div className="app" style={{ zoom: 0.9 }}>
@@ -65,8 +83,11 @@ export default function AppShell() {
             flags={flags}
             onLogout={onLogout}
             isBoard={!!board}
+            tenantSwitcher={<TenantSwitcher />}
           />
-          <Outlet context={{ edit, layout, setLayout, openLib, go, flags, board }} />
+          <ModuleGate>
+            <Outlet context={{ edit, layout, setLayout, openLib, go, flags, board }} />
+          </ModuleGate>
         </div>
       </div>
       {libOpen && board && (
