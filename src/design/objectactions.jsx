@@ -21,7 +21,7 @@
    met `only={[...]}` kun je dat per plek nog beperken.
    ============================================================ */
 import { ICONS } from './icons'
-import { useStore, setState, getState, toast, notImplemented } from './store.jsx'
+import { useStore, setState, getState, toast } from './store.jsx'
 import { AssignAction, currentActor, asgFirst, logToCustomer, logToMember } from './assign.jsx'
 
 /* welke van de vier per objecttype zinvol zijn */
@@ -43,12 +43,11 @@ function oaActor() { return currentActor() || { name: "Iemand" }; }
 function oaFirst() { const a = oaActor(); return asgFirst(a.name); }
 
 /* ── gedeelde helpers, ook los bruikbaar door modules ── */
-function openKlantCard(custId) {
+function openKlantCard(custId, fromLabel) {
   if (!custId) return;
-  // Toekomstvast: de volledige CRM-klantkaart luistert straks op crm.full.
+  // Opent de gedeelde klantkaart (ClientFullHost luistert op crm.full).
   setState("crm.full", custId);
-  // CRM-module bestaat nog niet → geen stille no-op maar een nette melding.
-  notImplemented("Volledige klantkaart");
+  logToCustomer(custId, oaFirst() + " opende de klantkaart" + (fromLabel ? " vanuit " + fromLabel : ""));
 }
 function sendObjectToVandaag(obj) {
   const verb = OBJ_VERB[obj.type] || OBJ_VERB._default;

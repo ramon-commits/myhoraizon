@@ -191,6 +191,99 @@ function buildSeedTimeline(c) {
   return out.map((e) => (e.ts != null ? e : { ...e, ts: whenToTs(e.when) }));
 }
 
+const ATTENTION_DAYS = 75;
+/* ---------- klant-status + CRM-helpers (gedeeld met de klantkaart) ---------- */
+const STATUS_META = {
+  active:    { label: "Actief",    accent: "green" },
+  "win-back":{ label: "Win-back",  accent: "orange" },
+  old:       { label: "Oud",       accent: "navy" },
+  prospect:  { label: "Prospect",  accent: "aqua" },
+};
+function StatusDot({ status }) {
+  const m = STATUS_META[status] || STATUS_META.prospect;
+  return <span className="sx-status" style={{ color: AC(m.accent), background: ACsoft(m.accent) }}><span className="sx-status-dot" style={{ background: AC(m.accent) }} />{m.label}</span>;
+}
+function custAttention(store, c) {
+  if (!c || c.status === "prospect") return false;
+  if (c.status === "win-back" || c.status === "old") return true;   // win-back-segment vraagt altijd aandacht
+  return daysSinceContact(store, c) >= ATTENTION_DAYS;               // actieve klant die stil valt → uit de log
+}
+function custIdleMonths(store, c) {
+  const d = daysSinceContact(store, c);
+  if (d >= 9000) return c.idle || 0;
+  return Math.round(d / 30);
+}
+/* volgende stap per relatie: één afgesproken vervolgactie + termijn.
+   u = urgentie: over | today | soon | later. Override leeft in store. */
+const CRM_NEXT = {
+  c_okura:         { txt: "Jaarcontract-voorstel nabellen",        due: "vandaag",       u: "today" },
+  c_nieuwevaart:   { txt: "Offerte \u20ac 4.400 afronden, 2\u00d7 herinnerd", due: "te laat", u: "over" },
+  c_hoxton:        { txt: "Business-upgrade voorstel sturen",       due: "deze week",     u: "soon" },
+  c_pllek:         { txt: "Bedankje voor doorverwijzing sturen",     due: "volgende week", u: "later" },
+  c_conservatorium:{ txt: "Kennismaking donderdag voorbereiden",     due: "do 25 jun",     u: "soon" },
+  c_marqt:         { txt: "Win-back-aanbieding bellen",              due: "vandaag",       u: "today" },
+  c_hotelv:        { txt: "Persoonlijk belletje van Ramon",          due: "deze week",     u: "soon" },
+  c_okura2:        { txt: "Eerste mail opvolgen",                    due: "morgen",        u: "soon" },
+  c_okura3:        { txt: "Referentie Okura meesturen",             due: "deze week",     u: "soon" },
+  c_rotterdam:     { txt: "Rotterdam-route prijs rondmaken",         due: "morgen",        u: "soon" },
+  c_utrecht:       { txt: "Laatste win-back-mail, of afsluiten", due: "deze maand",  u: "later" },
+  c_haarlem:       { txt: "Najaarsarrangement herinneren",           due: "volgende maand",u: "later" },
+  p_lisa:          { txt: "Mei-herinnering verjaardagstocht sturen",  due: "volgende maand",u: "later" },
+  p_youssef:       { txt: "Offerte vrijgezellenfeest sturen",        due: "vandaag",       u: "today" },
+};
+function custNext(store, c) {
+  const o = store.get("crm.next." + c.id, undefined);
+  if (o !== undefined) return o;
+  return CRM_NEXT[c.id] || null;
+}
+function setCustNext(store, c, val) { setState("crm.next." + c.id, val); }
+const DUE_META = {
+  over:  { a: "red",    ic: "clock" },
+  today: { a: "orange", ic: "clock" },
+  soon:  { a: "gold",   ic: "calendar" },
+  later: { a: "navy",   ic: "calendar" },
+};
+/* ---------- omzet-impact: lopende deal + jaarwaarde-at-risk ---------- */
+function custDeal(store, c) {
+  const deals = store.get("pipe.deals", SALES_PIPELINE);
+  return deals.find((d) => d.cust === c.id) || null;
+}
+/* historische maandwaarde van weggelopen klanten (winbaar) */
+const WAS_MONTHLY = { c_marqt: 1200, c_hotelv: 950, c_utrecht: 800 };
+function riskValue(store, c) {
+  if (c.status === "win-back" || c.status === "old") return (WAS_MONTHLY[c.id] || 600) * 12;
+  if (c.status === "active" && custAttention(store, c)) return (c.monthly || 0) * 12;
+  return 0;
+}
+function riskLabel(store, c) {
+  if (c && (c.status === "win-back" || c.status === "old")) return "winbaar/jr";
+  if (c && c.status === "active" && custAttention(store, c)) return "omzet-at-risk";
+  return null;
+}
+/* ---------- bedrijfs- & contactgegevens (CRM-backend-model) ----------
+   Elke klant = één bedrijf (Handelsregister-gegevens) met één of meer
+   contactpersonen. Seeds krijgen afgeleide velden zodat alles gevuld is. */
+function custKvk(c) {
+  if (c.kvk) return c.kvk;
+  let h = 0; for (const ch of (c.id || c.name || "")) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return String(60000000 + (h % 39999999));
+}
+function custKind(c) { return c && c.kind === "particulier" ? "particulier" : "bedrijf"; }
+function custLegal(c) { return c.legalForm || "B.V."; }
+function custWebsite(c) { return c.website || (c.email && c.email.includes("@") ? c.email.split("@")[1] : null); }
+function custAddress(c) { return c.address || c.city; }
+function custContacts(c, store) {
+  const base = (c.contacts && c.contacts.length) ? c.contacts : [{ name: c.contact, role: "Hoofdcontact", email: c.email, phone: c.phone, primary: true }];
+  const extra = store ? store.get("sales.contact." + c.id, []) : [];
+  return [...base, ...extra];
+}
+function addCustContact(store, id, contact) {
+  const cur = store.get("sales.contact." + id, []);
+  setState("sales.contact." + id, [...cur, contact]);
+}
+const LOG_AC = { mail: "red", wa: "green", call: "navy", order: "green", stil: "orange", note: "purple", deal: "gold", stage: "aqua", offerte: "gold", factuur: "navy", meeting: "aqua", done: "green", assign: "navy", owner: "navy" };
+const LOG_IC = { mail: "gm", wa: "wa", call: "phone", order: "check", stil: "bell", note: "pencil", deal: "chartup", stage: "arrow", offerte: "doc", factuur: "invoice", meeting: "calendar", done: "check", assign: "users", owner: "star" };
+
 function NewDealModal({ store, onClose, defaultStage = "nieuw" }) {
   const [form, setForm] = useStateS2({ name: "", contact: "", value: "", stage: defaultStage, owner: "Ramon", note: "" });
   const body = flowBody(store);
@@ -562,4 +655,10 @@ function SalesOverzicht({ onOpen, onCard, goTab }) {
   );
 }
 
-export { SalesDash, SalesPipeline, SalesOverzicht, PipelineSummaryBar, NewDealModal, PipelineFlowEditor, PIPE_STAGES, STAGE_BY, SALES_PIPELINE, eur, dealStage, daysSinceContact, stageTarget };
+export {
+  SalesDash, SalesPipeline, SalesOverzicht, PipelineSummaryBar, NewDealModal, PipelineFlowEditor,
+  PIPE_STAGES, STAGE_BY, SALES_PIPELINE, eur, dealStage, daysSinceContact, stageTarget,
+  StatusDot, STATUS_META, custAttention, custIdleMonths, custIdleLabel, custNext, setCustNext, DUE_META,
+  custDeal, riskValue, riskLabel, custKvk, custKind, custLegal, custWebsite, custAddress, custContacts, addCustContact,
+  CRM_NEXT, LOG_AC, LOG_IC, idleLabel, addCustLog, buildSeedTimeline, custTimeline,
+};

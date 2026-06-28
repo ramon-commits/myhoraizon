@@ -2,9 +2,10 @@ import { Outlet, useNavigate, useLocation } from 'react-router-dom'
 import { useState, useMemo, useEffect } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { Sidebar, TopBar } from '../design/shell.jsx'
-import { ToastHost, ConfirmHost, toast } from '../design/store.jsx'
+import { ToastHost, ConfirmHost, toast, setState } from '../design/store.jsx'
 import { loadLayout, saveLayout, buildDefault, WidgetLibrary, BOARDS } from '../design/tiles.jsx'
 import IrisChatPanel from './IrisChatPanel'
+import { ClientFullHost } from '../design/klantkaart.jsx'
 import { useTenant } from '../tenant/TenantProvider'
 import { MODULES, ROUTE_MODULE } from '../tenant/modules'
 import { checkModuleAccess } from '../tenant/access'
@@ -58,6 +59,10 @@ export default function AppShell() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setEdit(false); setLibOpen(false) }, [board])
 
+  // gedeelde klantkaart sluiten zodra je van route wisselt — de kaart hoort niet
+  // open te blijven hangen als je wegnavigeert (en houdt zo de poort-test schoon)
+  useEffect(() => { setState('crm.full', null) }, [location.pathname])
+
   const go = (id) => { navigate(id === 'dashboard' ? '/' : '/' + id) }
   const onLogout = async () => { await signOut(); navigate('/login') }
   const openLib = () => setLibOpen(true)
@@ -98,6 +103,7 @@ export default function AppShell() {
         <WidgetLibrary layout={layout} setLayout={setLayout} flags={flags} board={board} onClose={() => setLibOpen(false)} />
       )}
       <IrisChatPanel />
+      <ClientFullHost onOpen={go} />
       <ToastHost />
       <ConfirmHost />
     </div>

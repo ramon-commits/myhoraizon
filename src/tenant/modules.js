@@ -45,7 +45,7 @@ export const ROUTE_MODULE = {
   pipeline: 'sales',
   relatiebeheer: 'sales',
   finder: 'sales',
-  crm: 'sales',
+  // crm = core (clients), niet sales-gated → niet in deze alias
 }
 
 // route-segment ('' = dashboard) -> module-entry; null als de route geen

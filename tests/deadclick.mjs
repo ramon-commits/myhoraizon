@@ -89,7 +89,7 @@ function __collect(){
     if(el.disabled) return false;
     if(!__vis(el)) return false;
     if(el.tagName==='A'){ const h=el.getAttribute('href')||''; if(el.target==='_blank') return false; if(/^https?:|^mailto:|^tel:/i.test(h)) return false; }
-    if(el.classList.contains('on')&&(el.classList.contains('iview')||el.classList.contains('ichip')||el.classList.contains('qc-tab')||el.classList.contains('size-pill')||el.getAttribute('role')==='tab')) return false;
+    if(el.classList.contains('on')&&(el.classList.contains('iview')||el.classList.contains('ichip')||el.classList.contains('qc-tab')||el.classList.contains('size-pill')||el.classList.contains('sx-tab')||el.classList.contains('crm-sort-b')||el.getAttribute('role')==='tab')) return false;
     return true;
   });
 }

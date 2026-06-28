@@ -4,6 +4,73 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 12: Sales-suite deel 2 — CRM + de GEDEELDE klantkaart (2026-06-28)
+
+### De gouden regel waargemaakt: ÉÉN klantkaart, overal
+De klantkaart is nu **één gedeelde component** die overal opent — Inbox,
+Pipeline én CRM roepen exact dezelfde kaart aan. Geen tweede versie per pagina.
+Mechaniek: `openKlantCard(id)` → `setState("crm.full", id)` → `ClientFullHost`
+(één keer gemonteerd in `AppShell`) rendert `ClientFullView` als overlay
+(CompanyFull voor bedrijf, PersonFull voor particulier).
+
+### Stubs die nu ECHT werden (de 3 "Ga naar klant")
+`openKlantCard` was een `notImplemented`-toast (stap 9). Nu de echte opener van
+de gedeelde kaart. Daarmee zijn in één klap drie plekken live, zónder daar iets
+te bouwen:
+- **Inbox-gesprek** (ContactPanel → "Ga naar klant"/"Volledige klantkaart") →
+  opent de kaart (PersonFull, bv. Lisa de Vries).
+- **Pipeline-deal** (kaart → "Ga naar klant") → opent dezelfde kaart
+  (CompanyFull, bv. Hotel Okura), met de log-regel "opende de klantkaart vanuit
+  deal …".
+- **CRM-lijst + NL-kaart-pin** → opent de kaart.
+Headless geverifieerd met screenshots: alle drie openen de echte kaart, geen toast.
+
+### Wat gebouwd (letterlijk uit de blauwdruk, salescrm.jsx + module 14)
+- **`src/design/klantkaart.jsx`** (NIEUW, de gedeelde kaart): `ClientFullView` +
+  `ClientFullHost` + CompanyFull/PersonFull + NextStepCard + CfTimelineCard
+  (ctLive/ctTasks/cfTimeline/cfDocs). Bevat: contactgegevens, eigenaar/status,
+  Iris-analyse, volgende-stap-kaart, gekoppelde deals + documenten (uit sales.jsx),
+  de log-gebaseerde activiteiten-tijdlijn (takenlog/assign) en ObjectActions.
+- **`src/design/crm.jsx`** (NIEUW): `/crm` — sx-hero + NL-kaart met pins
+  (positie uit de x/y-haakjes in `customers.js`, niet hardcoded) + klantenlijst
+  (zoek/tabs/sorteer, volgende stap, waarde, smart-signaal, status, snelle acties).
+  Elke rij/pin opent de gedeelde kaart.
+- **`src/pages/CrmPage.jsx`** (NIEUW): gate op core-module 'clients'.
+
+### Gedeeld vs. al aanwezig
+Hergebruikt: `customers.js` (allCustomers), `objectactions.jsx` (openKlantCard +
+ObjectActions), `sales.jsx` (deal-/klant-helpers — uitgebreid met de CRM/kaart-
+helpers: StatusDot/STATUS_META/custKind/custContacts/custDeal/custNext/addCustLog/
+buildSeedTimeline/eur/…), `assign.jsx` (OwnerField/log), `store.jsx`
+(useStore/setState/toast/notImplemented), components (AC/Avatar/Btn/Panel).
+
+### Tenant
+`clients` is **core** (altijd aan) → `/crm` niet sales-gated; daarom uit de
+ROUTE_MODULE-alias gehaald. De klantkaart zelf is module-overstijgend en werkt
+ongeacht waar hij geopend wordt.
+
+### Bewuste beperkingen
+- Configureerbare kolommen/filters (crmfields-registry) en de KvK-nieuwe-klant-
+  flow volgen later; "Nieuwe klant" toont zolang een `notImplemented`-toast.
+
+### Knoppen-poort + nette UX-fix
+- `AppShell` sluit de klantkaart nu bij route-wissel (de kaart hoort niet open te
+  blijven hangen als je wegnavigeert) — nette UX én houdt de poort-test schoon.
+- Poort-harness: reeds-actieve `sx-tab`/`crm-sort-b` toegevoegd aan de allowlist
+  (her-selecteren van de actieve filter/sortering is een legitieme no-op, net als
+  iview/ichip/qc-tab).
+
+### Getest
+- `npm run build` + `npm run lint`: groen (alleen bekende faithful-port deps-
+  waarschuwingen). `npm run test:knoppen / /inbox /sales /pipeline /crm`: **groen**
+  (96 knoppen, geen dode klikken).
+- Screenshots: kaart opent identiek vanuit /crm (Marqt Overtoom), Pipeline
+  (Hotel Okura) en Inbox-gesprek (Lisa de Vries).
+
+### Status: CRM + gedeelde klantkaart klaar; wacht op visuele vergelijking.
+
+---
+
 ## Stap 11: Sales-suite deel 1 — Pipeline (2026-06-28)
 
 ### Wat gebouwd (letterlijk uit de blauwdruk)
