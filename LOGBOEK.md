@@ -4,6 +4,100 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Reparatie-steen 2: /sales naar het echte TileGrid-bord (2026-06-28)
+
+### De afwijking
+Inventarisatie tegen de Design MCP (project a948021d, live opgehaald) wees uit:
+in de blauwdruk is `/sales` een **TileGrid-widget-bord** (`board="sales"`), met de
+takenlijst als één widget erin. Wij bouwden `/sales` als een vaste
+overzicht-component (`SalesDash` → `SalesOverzicht`: funnel + Aandacht + omzet-trend).
+Dat is de afwijking. Deze proef-steen zet **alleen** `/sales` om naar het echte bord.
+
+### Live-bron (Design MCP)
+- **`dashboard/shell.jsx`**, `App()`, blok `view === "sales"`:
+  ```jsx
+  ) : view === "sales" ? (
+    <div className="dash sales-board">
+      <header className="sx-hero"> … <h1>Sales</h1>
+        <p className="sx-hero-sub mono">Je sales-overzicht, pipeline, klanten en omzet, aangestuurd door Hugo en Iris</p>
+      </header>
+      …
+      <TileGrid board="sales" edit={edit} onOpen={go} layout={salesLayout}
+                setLayout={setSalesLayout} flags={effFlags} onAddWidget={() => setLibOpen("sales")} />
+    </div>
+  )
+  ```
+- **`dashboard/tiles.jsx`**, board-config:
+  ```js
+  const SALES_ORDER = ["omzet","saleskpis","salestaken","irisattn","pipeline","crm","relatiebeheer","finder"];
+  sales: { key:"myhoraizon.sales.layout.v2", ids:()=>SALES_POOL…, order:SALES_ORDER,
+           pin:["saleskpis","salestaken"], autofill:false }
+  ```
+
+### Wat al bestond (en hergebruikt is)
+De board-motor was al volledig geport en gewired:
+- `src/design/tiles.jsx` — `TileGrid`, `WidgetLibrary` (de widget-markt), `BOARDS`,
+  `loadLayout/saveLayout/buildDefault`. Salestaken rendert via `VoorstellenWidget`
+  (scope "sales") uit `vandaag.jsx`; KPI-strip via `KpiStrip`; module-tegels uit `data.js`.
+- `src/components/AppShell.jsx` — beheert `edit`, `layout = loadLayout(board)`, de
+  widget-markt en geeft alles via Outlet-context. Omdat `BOARDS.sales` bestaat,
+  berekende AppShell `board="sales"` al; alleen de pagina consumeerde 't niet.
+- `DashboardPage`/`VandaagPage` zijn het bewezen patroon (zelfde Outlet-context).
+
+### Wat nieuw moest (minimaal)
+Alleen `SalesPage.jsx` herschreven: van `<SalesDash>` naar `dash sales-board` +
+`sx-hero` (exacte blauwdruk-subtitle) + `edit`-hint + `<TileGrid board="sales">`,
+via `useOutletContext()`. De tenant-gate (`useModuleSettings('sales')` + ModuleGate)
+bleef ongewijzigd — Sales blijft custom-module (tenant 1 aan, tenant 2 403).
+
+### Eén widget-motor (keuze + onderbouwing)
+We stonden op twee motoren: de **TileGrid-board-laag** (blauwdruk) en de
+**Panel-laag** (`widgets.jsx`/`WidgetsProvider`, uit reparatie-steen 1, toen op
+`SalesOverzicht` gezet als proef). Gekozen: **standaardiseren op de TileGrid-board-laag**,
+precies zoals de blauwdruk `/sales` doet. Daarom de Panel-motor van de
+sales-surface ge-de-wired: `WidgetsProvider`/`HiddenTray` + edit-toggle uit
+`SalesOverzicht` verwijderd en de `widgets.jsx`-import uit `sales.jsx` geschrapt.
+`SalesOverzicht`/`SalesDash` blijven als (nu niet-geroute, stub-vrije) componenten
+bestaan — niet weggegooid. `widgets.jsx` is nu nergens meer geïmporteerd; kan in
+een latere opruim-steen weg of dienen voor de Beheer-pagina (`WidgetsAdmin`).
+Andere pagina's (Dashboard, Pipeline, CRM) onaangeraakt.
+
+### Bestanden
+- Gewijzigd: `src/pages/SalesPage.jsx` (board i.p.v. SalesDash),
+  `src/design/sales.jsx` (Panel-motor uit SalesOverzicht; import weg).
+
+### Getest
+- `npm run build`: slaagt. `npm run lint`: 0 errors (3 pre-existing warnings).
+- `npm run test:knoppen`: GROEN — 66 knoppen over 4 standaardroutes; `/sales`
+  apart: 44 knoppen groen.
+
+### Trouw-rapport
+- **Design-bestanden**: `dashboard/shell.jsx` (routing) + `dashboard/tiles.jsx` (board).
+- **Score: 9/10.** `/sales` rendert nu letterlijk het blauwdruk-bord: `dash sales-board`
+  + `sx-hero` + `<TileGrid board="sales">`, met exact dezelfde widgetpool, volgorde
+  en pinning (saleskpis + salestaken). Resterende afwijkingen:
+  1. Hero-logo: blauwdruk gebruikt `<img src="dashboard/sales-mark.svg">`; lokaal de
+     `KyanoMark` (rood) — dezelfde repo-conventie als sidebar/pipeline, asset zit niet
+     in de ESM-build. Subtitle + classes zijn wél 1:1.
+  2. Edit-modus/markt leven in `AppShell` (Outlet-context) i.p.v. lokale state in
+     `App()`; functioneel identiek (Bewerk → wiebel + S/M/L/XL + ×, Widget toevoegen
+     → `WidgetLibrary board="sales"`).
+
+### Zelf checken (klikpad naast je Design)
+1. Ga naar **/sales**. Je ziet de **sx-hero** ("Sales" + subtitle) en daaronder het
+   tegelbord, standaard: **Omzet**, **KPI's** (Sales-kerncijfers, volle breedte),
+   **Sales-taken** (de takenlijst als XL-widget), **Iris vraagt aandacht**, en de
+   tegels **Pipeline / CRM / Relatiebeheer / Finder**.
+2. Klik **Bewerk** (topbar): tegels gaan wiebelen, je krijgt **S / M / L / XL** per
+   tegel, een **×** om te verbergen, en een sleep-cursor om te ordenen.
+3. Klik **Widget toevoegen**: de echte **widget-markt** (`WidgetLibrary`) opent met
+   de sales-widgetpool (omzet, agenda, offertes, facturen, contracten, analytics,
+   taken-log…). Voeg er een toe → verschijnt op het bord.
+4. Herlaad: je indeling blijft staan onder `localStorage` sleutel
+   `myhoraizon.sales.layout.v2`. **Herstel** (topbar, in bewerkmodus) zet 'm terug.
+
+---
+
 ## Reparatie-steen 1: 31-widgets als gedeelde laag (2026-06-28)
 
 ### Het ontbrekende fundament

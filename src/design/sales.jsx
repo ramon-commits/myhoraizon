@@ -12,7 +12,6 @@ import { AC, ACsoft, Avatar, Btn, Panel, AreaChart, KyanoMark } from './componen
 import { allCustomers, custById } from './customers.js'
 import { OwnerField, currentActor, logToMember } from './assign.jsx'
 import { ObjectActions, openKlantCard } from './objectactions.jsx'
-import { WidgetsProvider, HiddenTray } from './widgets.jsx'
 
 const { useState: useStateS2 } = React
 
@@ -576,7 +575,6 @@ function SalesDash({ onOpen }) {
 /* ---------- OVERZICHT: widget-bord met marktplaats (zoals dashboard) ---------- */
 function SalesOverzicht({ onOpen, onCard, goTab }) {
   const store = useStore();
-  const [edit, setEdit] = useStateS2(false);
   const custs = allCustomers(store);
   const pipe = SALES_PIPELINE.map((d) => ({ ...d, stage: dealStage(store, d) }));
   const open = pipe.filter((d) => d.stage !== "gewonnen");
@@ -595,13 +593,10 @@ function SalesOverzicht({ onOpen, onCard, goTab }) {
           <div className="sx-kpi"><div className="sx-kpi-v" style={{ color: AC("green") }}>{eur(wonValue)}</div><div className="sx-kpi-l mono">gewonnen · mnd</div></div>
           <div className="sx-kpi"><div className="sx-kpi-v" style={{ color: stale.length ? AC("orange") : "var(--ink1)" }}>{stale.length}</div><div className="sx-kpi-l mono">staan stil</div></div>
         </div>
-        <button className="tb-btn" onClick={() => setEdit((v) => !v)}>
-          <span dangerouslySetInnerHTML={{ __html: ICONS(edit ? "check" : "sliders", { sw: 2 }) }} />{edit ? "Klaar" : "Bewerk"}
-        </button>
       </div>
 
-      <WidgetsProvider moduleId="sales" editing={edit}>
-        <div className={"page-body pw-grid" + (edit ? " pw-edit" : "")}>
+      <>
+        <div className="page-body pw-grid">
           <Panel wid="Pijplijn" eyebrow="Nieuwe klanten · per fase" title="Pijplijn" accent="red"
             right={<Btn kind="tint" accent="red" size="sm" onClick={() => goTab("pipeline")}>Naar pipeline</Btn>}>
             <div className="sx-funnel">
@@ -652,8 +647,7 @@ function SalesOverzicht({ onOpen, onCard, goTab }) {
             ); })}
           </Panel>
         </div>
-        <HiddenTray />
-      </WidgetsProvider>
+      </>
     </>
   );
 }
