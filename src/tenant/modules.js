@@ -39,9 +39,19 @@ export function isCore(moduleKey) {
   return m ? m.kind === 'core' : false
 }
 
+// Sub-routes die onder een module-package vallen (zelfde gate als hun module).
+// Pipeline/Relatiebeheer/Leadfinder/CRM zijn werkvlakken van de Sales-module.
+export const ROUTE_MODULE = {
+  pipeline: 'sales',
+  relatiebeheer: 'sales',
+  finder: 'sales',
+  crm: 'sales',
+}
+
 // route-segment ('' = dashboard) -> module-entry; null als de route geen
 // getenant-gate-module is (dan altijd toegankelijk).
 export function moduleByRoute(routeId) {
   const seg = routeId === '/' ? '' : String(routeId || '').replace(/^\//, '')
+  if (ROUTE_MODULE[seg]) return MODULE_BY_KEY[ROUTE_MODULE[seg]] || null
   return MODULES.find((m) => m.route === seg) || null
 }

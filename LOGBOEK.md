@@ -4,6 +4,50 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 11: Sales-suite deel 1 — Pipeline (2026-06-28)
+
+### Wat gebouwd (letterlijk uit de blauwdruk)
+- **`src/design/sales.jsx`** (gedeelde Sales-laag): pijplijn-fasen (PIPE_STAGES),
+  instelbare flow (getFlow/saveFlow/stageTarget), deal-/klant-helpers en de
+  log-gebaseerde contact-engine (daysSinceContact/buildSeedTimeline → stale-
+  signaal), plus de componenten: **SalesPipeline** (Trello-kanban: kolommen=fases,
+  sleepbare kaarten tussen fases, fase-pijlen, waarde per kolom, stale-bel),
+  PipelineSummaryBar, NewDealModal, PipelineFlowEditor, en SalesOverzicht/SalesDash.
+- **/sales** (overzicht: KPI-bar + funnel + aandacht + omzet-trend + recente deals)
+  en **/pipeline** (de kanban). Beide pagina's nieuw.
+
+### Hergebruikt
+ListRow/StatusBadge bleken niet nodig (de kanban heeft eigen kb-card-vorm uit de
+blauwdruk); wél hergebruikt: Panel, Avatar, Btn, AreaChart, KyanoMark (components),
+assign.jsx (OwnerField/currentActor/logToMember), objectactions (ObjectActions +
+openKlantCard), customers.js (allCustomers/custById), store (Modal/Field/confirmAsk).
+
+### Belangrijke fix
+- De **kanban/sales-CSS (kb-*/sx-*) ontbrak** in blueprint.css: die staat in het
+  TWEEDE `<style>`-blok van de Design-export, dat bij stap 3 niet was geëxtraheerd
+  (alleen blok 1 = dashboard/inbox). Blok 2 (module-pagina + Sales) nu toegevoegd
+  aan blueprint.css. Daarmee rendert de kanban als horizontaal bord i.p.v. lijst.
+
+### Tenant
+- 'sales' is een custom-module. /sales + /pipeline achter de globale ModuleGate;
+  /pipeline gate't op 'sales' via ROUTE_MODULE-alias. Sidebar verbergt Sales +
+  sub-routes (pipeline/crm/finder/relatiebeheer) als de tenant geen sales heeft.
+  Pagina's lezen aan/uit via useModuleSettings('sales').
+
+### Bewuste beperkingen
+- Klantkaart-clicks (kaart/Ga-naar-klant) → openKlantCard = notImplemented-toast
+  tot de CRM-deel (volledige klantkaart) er is.
+- /sales "Bewerk" (widget-edit) → notImplemented; de WidgetsProvider-laag komt later.
+- Relatiebeheer/Leadfinder/CRM zijn deel 2/3 (nu placeholders, wel sales-gated).
+
+### Getest
+- `npm run build` + `npm run lint`: groen. `npm run test:knoppen / /vandaag /inbox
+  /sales /pipeline`: groen (86 knoppen). Kanban headless geverifieerd.
+
+### Status: Sales deel 1 (Pipeline) klaar.
+
+---
+
 ## Stap 10: Tenant-ruggengraat (dun) (2026-06-28)
 
 ### Vormen 1:1 gespiegeld uit horaizon-brain

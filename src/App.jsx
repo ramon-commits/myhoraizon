@@ -11,7 +11,7 @@ import { KYANO } from './design/data'
 // Placeholder-routes voor elke blauwdruk-module die nog geen echte pagina heeft,
 // plus de losse views (iris, settings, vandaag, ...). De sidebar navigeert naar
 // '/{id}'; deze routes vangen ze op tot de module gebouwd is.
-const REAL_PAGES = new Set(['offertes', 'contracten', 'facturen', 'vandaag', 'postvak'])
+const REAL_PAGES = new Set(['offertes', 'contracten', 'facturen', 'vandaag', 'postvak', 'sales', 'pipeline'])
 const PLACEHOLDER_ROUTES = [
   ...KYANO.modules.map((m) => ({ id: m.id, label: m.name })),
   { id: 'iris', label: 'Iris' },
@@ -23,6 +23,8 @@ import AuthCallback from './pages/AuthCallback'
 import DesignCheckPage from './pages/DesignCheckPage'
 import VandaagPage from './pages/VandaagPage'
 import InboxPage from './pages/InboxPage'
+import SalesPage from './pages/SalesPage'
+import PipelinePage from './pages/PipelinePage'
 import DashboardPage from './pages/DashboardPage'
 import QuotesListPage from './pages/QuotesListPage'
 import QuoteDetailPage from './pages/QuoteDetailPage'
@@ -60,6 +62,8 @@ export default function App() {
               <Route path="vandaag" element={<VandaagPage />} />
               <Route path="postvak" element={<InboxPage />} />
               <Route path="inbox" element={<InboxPage />} />
+              <Route path="sales" element={<SalesPage />} />
+              <Route path="pipeline" element={<PipelinePage />} />
               <Route path="offertes" element={<QuotesListPage />} />
               <Route path="offertes/:id" element={<QuoteDetailPage />} />
               <Route path="contracten" element={<ContractsListPage />} />

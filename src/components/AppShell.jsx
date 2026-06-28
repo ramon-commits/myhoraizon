@@ -6,7 +6,7 @@ import { ToastHost, ConfirmHost, toast } from '../design/store.jsx'
 import { loadLayout, saveLayout, buildDefault, WidgetLibrary, BOARDS } from '../design/tiles.jsx'
 import IrisChatPanel from './IrisChatPanel'
 import { useTenant } from '../tenant/TenantProvider'
-import { MODULES } from '../tenant/modules'
+import { MODULES, ROUTE_MODULE } from '../tenant/modules'
 import { checkModuleAccess } from '../tenant/access'
 import ModuleGate from '../tenant/ModuleGate'
 import TenantSwitcher from '../tenant/TenantSwitcher'
@@ -19,6 +19,10 @@ function tenantFlags(activeTenant) {
   if (!activeTenant) return flags
   for (const m of MODULES) {
     if (m.kind === 'custom' && !checkModuleAccess(activeTenant, m.key).allowed) flags[m.route] = false
+  }
+  // sub-routes (pipeline/crm/...) volgen de zichtbaarheid van hun module
+  for (const [route, key] of Object.entries(ROUTE_MODULE)) {
+    if (!checkModuleAccess(activeTenant, key).allowed) flags[route] = false
   }
   return flags
 }
