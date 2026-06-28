@@ -12,6 +12,7 @@ import { CompactView, DayView, WeekView, AgentStatusView, ChannelVolView } from 
 import { IrisVoorstellen } from './dashboard.jsx'
 import { VoorstellenWidget, SnelleActiesWidget } from './vandaag.jsx'
 import { TakenLogWidget } from './takenlog.jsx'
+import { IrisChat, IrisBriefing, IrisFlags } from './iris.jsx'
 
 const { useState, useRef, useEffect, useCallback } = React
 
@@ -282,13 +283,13 @@ function TileBody({ m, size, onOpen, count, view, edit }) {
     </>);
   }
   if (m.tileKind === "irischat") {
-    return <div className="irischat-tile" onClick={(e) => e.stopPropagation()}>{window.IrisChat ? React.createElement(window.IrisChat, { showActions: false, autoFocus: false }) : null}</div>;
+    return <div className="irischat-tile" onClick={(e) => e.stopPropagation()}><IrisChat showActions={false} autoFocus={false} /></div>;
   }
   if (m.tileKind === "irisbrief") {
-    return <div className="irisbrief-tile" onClick={(e) => e.stopPropagation()}>{window.IrisBriefing ? React.createElement(window.IrisBriefing, { size, onOpen }) : null}</div>;
+    return <div className="irisbrief-tile" onClick={(e) => e.stopPropagation()}><IrisBriefing size={size} onOpen={onOpen} /></div>;
   }
   if (m.tileKind === "irisflags") {
-    return <div className="irisflags-tile" onClick={(e) => e.stopPropagation()}>{window.IrisFlags ? React.createElement(window.IrisFlags, { size }) : null}</div>;
+    return <div className="irisflags-tile" onClick={(e) => e.stopPropagation()}><IrisFlags size={size} /></div>;
   }
   if (m.tileKind === "voorstel") {
     return <div className="voorstel-tile" onClick={(e) => e.stopPropagation()}>{<VoorstellenWidget size={size} view={view} onOpen={onOpen || (() => {})} />}</div>;

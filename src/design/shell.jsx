@@ -6,7 +6,7 @@ import React from 'react'
 import { ICONS } from './icons'
 import { KYANO } from './data'
 import { useStore, setState, toast } from './store.jsx'
-import { AC, ACsoft, HoraizonLogo } from './components.jsx'
+import { AC, ACsoft, HoraizonLogo, Eyebrow } from './components.jsx'
 import { useSmartMenu } from './menus'
 
 const { useState, useRef, useEffect } = React
@@ -321,5 +321,36 @@ export function TopBar({ view, go, edit, setEdit, onReset, openLib, flags, onLog
         )}
       </div>
     </header>
+  )
+}
+
+/* Live agent-feed onder het dashboard-bord, exact uit de blauwdruk (shell.jsx). */
+export function AgentsFeed({ go }) {
+  const m = MOD['agents']
+  if (!m || !m.feed) return null
+  return (
+    <section className="panel feed-panel">
+      <header className="panel-head">
+        <div>
+          <Eyebrow accent="purple" dot>Live activiteit</Eyebrow>
+          <h3 className="panel-title">Wat je agents deden</h3>
+        </div>
+        <button className="link-btn" onClick={() => go('agents')}>alles bekijken →</button>
+      </header>
+      <div className="panel-body">
+        <div className="feed">
+          {m.feed.map((f, i) => {
+            const a = KYANO.agents[f.who]
+            return (
+              <div className="feed-item" key={i}>
+                <LetterAv name={a.name} accent={a.accent} />
+                <div className="feed-main"><span><b>{a.name}</b> {f.act}</span></div>
+                <span className="feed-time">{f.time}</span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
   )
 }

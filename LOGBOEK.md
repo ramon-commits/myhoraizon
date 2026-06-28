@@ -4,6 +4,85 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 13: De zes resterende board-views uit de blauwdruk (2026-06-28)
+
+> Verplaatsing: project staat nu in `~/projects/myhoraizon` (was Desktop;
+> macOS-rechtenprobleem opgelost). Branch `main`, up-to-date met origin.
+
+### Wat gedaan
+De board-motor (`TileGrid` + `BOARDS` + widget-markt, uit reparatie-steen 1/2) is
+nu uitgerold over **alle** resterende module-views. Elke pagina volgt het bewezen
+patroon: een blauwdruk-getrouwe bordkop + `<TileGrid board="…">`, met
+edit-modus/layout/markt via de Outlet-context van `AppShell`. AppShell mapt
+automatisch (`board = BOARDS[view] ? view : null`), dus er was geen losse bedrading
+nodig: zodra `BOARDS.<view>` bestaat, krijgt de route zijn bord.
+
+Daarnaast twee Iris-tegels van window-globals naar echte ESM-imports getrokken
+(`window.IrisChat/IrisBriefing/IrisFlags` → directe imports uit `iris.jsx`), zodat
+het Iris-bord (en de Iris-tegels op Dashboard/Vandaag) ook in de ESM-build renderen.
+
+### Bestanden
+- `src/pages/IrisPage.jsx` (nieuw) — `/iris`: `IrisBoardHeader` + `TileGrid board="iris"`.
+- `src/pages/WebsitePage.jsx` (nieuw) — `/website`: `sx-hero` (Live + domein) +
+  `TileGrid board="website"`, achter `ModuleGate` (custom-module).
+- `src/pages/SeoPage.jsx` (nieuw) — `/seo`: `GroeiBoardHeader` + `TileGrid board="seo"`.
+- `src/pages/StudioPage.jsx` (nieuw) — `/studio`: `StudioBoardHeader` + `TileGrid board="studio"`.
+- `src/design/iris.jsx` (nieuw) — ESM-port: `IrisChat/IrisBriefing/IrisFlags/IrisAttention/IrisBoardHeader`.
+- `src/design/groei.jsx` (nieuw) — ESM-port: `GroeiBoardHeader`.
+- `src/design/studio.jsx` (nieuw) — ESM-port: `StudioBoardHeader`.
+- `src/design/leadfinder.jsx` + `src/design/finder-data.js` (nieuw) — Finder-widget + data.
+- `src/design/salestasks.jsx` (nieuw) — pipeline-deel: `SalesPipelinePage`,
+  `SaleskansenWidget`, `PipelineTakenWidget`, `pipelineTasks`, `incomingLeads`
+  (klaargezet voor stap 14 — Pipeline-bord).
+- `src/design/shell.jsx` — `AgentsFeed` toegevoegd (live agent-feed onder het
+  Dashboard-bord, 1:1 uit de blauwdruk-shell).
+- `src/design/tiles.jsx` — Iris-tegels (`irischat/irisbrief/irisflags`) van
+  `window.*`-globals naar ESM-imports.
+- `src/pages/DashboardPage.jsx` — `AgentsFeed` onder het bord (Dashboard-uitlijning).
+- `src/App.jsx` — routes + `REAL_PAGES` voor `iris/website/seo/studio`.
+
+### Getest
+- `npm run build`: slaagt (1899 modules, ~335ms).
+- `npm run lint`: 0 errors (3 pre-existing warnings). Eén opgeruimd: ongebruikte
+  `Eyebrow`-import in `iris.jsx`.
+- `npm run test:knoppen`: GROEN — geen dode klikken over de standaardroutes.
+
+### Trouw-rapport per board
+- **Dashboard-uitlijning** — Design: `dashboard/shell.jsx` (`AgentsFeed`).
+  **9/10.** De live agent-feed (`Wat je agents deden`) hangt nu 1:1 onder het bord,
+  exact uit de blauwdruk-shell. Afwijking: feed valt stil terug op `null` als
+  `MOD.agents.feed` ontbreekt (defensief; blauwdruk gaat uit van aanwezige data).
+- **Iris** (`/iris`) — Design: `dashboard/shell.jsx` view `iris` + `iris.jsx`.
+  **9/10.** `IrisBoardHeader` + `TileGrid board="iris"`, pool/volgorde/pin 1:1
+  (pin: irisbrief + irischat). Iris-tegels nu echte ESM-componenten.
+- **Vandaag** (`/vandaag`) — Design: `pages.jsx` Vandaag-board. **9/10.** Onveranderd
+  bewezen patroon (`VandaagBoardHeader` + `TileGrid board="vandaag"`); meegevalideerd.
+- **SEO/Groei** (`/seo`) — Design: `dashboard/shell.jsx` view `seo` + `groei.jsx`.
+  **8/10.** `GroeiBoardHeader` + `TileGrid board="seo"`; pool/volgorde/pin 1:1
+  (pin: groeikpis + groeitaken). Afwijking: KPI-assets (Semrush/Clarity-logo's)
+  vallen terug op repo-iconen.
+- **Studio** (`/studio`) — Design: `dashboard/shell.jsx` view `studio` + `studio.jsx`.
+  **8/10.** `StudioBoardHeader` + `TileGrid board="studio"`; pin: studiokpis +
+  studioconcepten. Concepten-tegel deelt de `salestaken`-motor (scope `studio`).
+- **Website** (`/website`) — Design: `dashboard/shell.jsx` view `website`.
+  **9/10.** `sx-hero` (Live-dot + `sloepenspel.nl` + Max & Mila) + `TileGrid
+  board="website"`, achter `ModuleGate`. Afwijking: hero-mark = `KyanoMark` (rood)
+  i.p.v. blauwdruk-`sales-mark.svg` — repo-conventie, asset niet in ESM-build.
+
+### Klikpad per route
+- **/** (Dashboard): bord + onderaan **Wat je agents deden** (live feed) → "alles bekijken →".
+- **/iris**: Iris-bordkop + tegels **Iris-briefing / Iris-chat / Iris vraagt aandacht /
+  Iris-flags**. Bewerk → S/M/L/XL + ×; Widget toevoegen → Iris-widgetmarkt.
+- **/vandaag**: groet-bordkop + **Taken / KPI's / Agenda / Postvak / …**.
+- **/seo**: Groei-bordkop + **Groei-KPI's / Groei-voorstellen / Iris-aandacht / Analytics / Pagina's**.
+- **/studio**: Studio-bordkop + **Studio-KPI's / Concepten van Mila / Iris-aandacht / Editor / SEO**.
+- **/website**: sx-hero (Live · sloepenspel.nl · Max & Mila, Bekijk/Beheer site) +
+  **Website-KPI's / Website-taken / Iris-aandacht / Analytics / SEO / Studio / Pagina's / Editor**.
+
+### Status: veiliggesteld op GitHub. Pipeline (`/pipeline`) volgt als stap 14.
+
+---
+
 ## Reparatie-steen 2: /sales naar het echte TileGrid-bord (2026-06-28)
 
 ### De afwijking

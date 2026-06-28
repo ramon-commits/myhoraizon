@@ -5,6 +5,7 @@ import { useOutletContext } from 'react-router-dom'
 import { ICONS } from '../design/icons'
 import { Greeting } from '../design/dashboard.jsx'
 import { TileGrid } from '../design/tiles.jsx'
+import { AgentsFeed } from '../design/shell.jsx'
 import { useModuleSettings } from '../tenant/TenantProvider'
 import ModuleOff from '../tenant/ModuleOff'
 
@@ -24,6 +25,7 @@ export default function DashboardPage() {
         </div>
       )}
       {layout && <TileGrid edit={edit} onOpen={go} layout={layout} setLayout={setLayout} flags={flags} onAddWidget={openLib} board={board} />}
+      <AgentsFeed go={go} />
     </div>
   )
 }
