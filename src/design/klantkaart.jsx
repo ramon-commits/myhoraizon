@@ -14,6 +14,7 @@ import { AC, ACsoft, Avatar, Btn } from './components.jsx'
 import { ObjectActions } from './objectactions.jsx'
 import { allCustomers } from './customers.js'
 import { StatusDot, STATUS_META, custKind, custContacts, addCustContact, custKvk, custLegal, custAddress, custWebsite, custDeal, custNext, setCustNext, DUE_META, eur, addCustLog, buildSeedTimeline, LOG_AC, LOG_IC } from './sales.jsx'
+import { CardKpiStrip } from './crmfields.jsx'
 
 const { useState: useStateCF, useEffect: useEffectCF } = React;
 
@@ -165,6 +166,7 @@ function PersonFull({ cust, contact, store, onClose, onOpen, onBackToCompany, on
 
       <div className="cf-grid">
         <div className="cf-main">
+          <section className="cf-card"><CardKpiStrip c={cust} store={store} /></section>
           {(isParticulier && cust.iris) && (
             <section className="cf-card cf-iris">
               <div className="cf-iris-head"><Avatar agent="iris" size={26} /><span className="cf-iris-pill">Iris-analyse</span></div>
@@ -321,6 +323,7 @@ function CompanyFull({ c, store, onClose, onOpen, onOpenPerson }) {
 
       <div className="cf-grid">
         <div className="cf-main">
+          <section className="cf-card"><CardKpiStrip c={c} store={store} /></section>
           {c.iris && (
             <section className="cf-card cf-iris">
               <div className="cf-iris-head"><Avatar agent="iris" size={26} /><span className="cf-iris-pill">Iris-analyse</span></div>

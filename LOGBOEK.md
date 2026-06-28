@@ -4,6 +4,74 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 16: De volledige CRM uit Claude Design (2026-06-29)
+
+### Aanleiding
+De repo-CRM was een bewuste *bounded port* (NL-kaart + vaste-kolom-lijst; "Nieuwe
+klant" = toast). Gevraagd: de **volledige** design-CRM (`CrmModule2` uit
+`salescrm.jsx`, live via de Design MCP opgehaald). Keuze: **alles**.
+
+### Wat erbij komt t.o.v. de bounded port
+1. **CRM-tegelbord** bovenaan (`<TileGrid board="pipeline"-stijl>` → `board="crm"`)
+   met Bewerk-modus + widget-markt, via de **AppShell-Outlet-context** (zoals
+   /sales en /pipeline) i.p.v. lokale shell-state uit de bron.
+2. **Instelbare kolommen** + **eigen velden** (tekst/getal, per klant invulbaar) —
+   `crmfields.jsx`-engine.
+3. **Filters** (`FilterBtn` + `FilterChips`, ≥/≤/= en enum/tekst, live).
+4. **KvK-nieuwe-klant-flow** (`NewClientFlow`): bedrijf opzoeken → autovullen →
+   koppelen aan bestaand bedrijf óf nieuw aanmaken + contactpersoon.
+5. **Instelbare klantkaart-KPI's**: `CardKpiStrip` toegevoegd boven in de
+   gedeelde klantkaart (Company + Person).
+
+### Bestanden
+- `src/design/crmfields.jsx` (nieuw) — registry van velden: cellen, sorteer/
+  filter, eigen velden, `ColumnsBtn`/`FilterBtn`/`FilterChips`, `CardKpiStrip`/
+  `CardMetaRows`, `crmSignal`. ESM-port; window-globals → imports.
+- `src/design/crm.jsx` — herschreven van bounded port naar `CrmModule2`:
+  bord + tools (zoek/tabs/sorteer/filter/kolommen) + instelbare tabel +
+  `NewClientFlow`. `ClientCard` → de gedeelde `openKlantCard`; bord via Outlet-
+  context. `kvkSearch`/`matchExisting` als demo-equivalent (de blauwdruk-bron
+  zat niet in de opgehaalde MCP-bestanden; zelfde vorm, "Hotel Okura" matcht een
+  bestaande klant zodat de "Al in CRM"-koppelflow zichtbaar is).
+- `src/pages/CrmPage.jsx` — geeft de Outlet-board-context door aan de CRM-view.
+- `src/design/klantkaart.jsx` — `CardKpiStrip` boven in Company- en PersonFull.
+
+### Afwijkingen t.o.v. de bron (eerlijk)
+- **NL-kaart weg van /crm**: de design-`CrmModule2` rendert geen inline NL-kaart
+  meer (die was van de bounded port); de design vervangt 'm door het tegelbord.
+  Re-toe te voegen als bord-widget indien gewenst.
+- **kvkSearch/matchExisting**: demo-equivalent (zie boven), geen letterlijke bron.
+- **Klantkaart**: `CardKpiStrip` toegevoegd (instelbare KPI's); de bestaande
+  rijke inline company-meta (KvK/rechtsvorm/…) is bewust behouden i.p.v. vervangen
+  door `CardMetaRows` (zou KvK/rechtsvorm verliezen). `CardMetaRows` is wel
+  geëxporteerd/beschikbaar.
+
+### Getest
+- `npm run build`: slaagt (1908 modules). `npm run lint`: 0 errors (3 pre-existing warnings).
+- `npm run test:knoppen` (default 4 routes): GROEN — 110 knoppen, geen regressies.
+- `/crm` (live dev-server :5174): GROEN — 59 knoppen, geen dode klikken.
+
+### Trouw-rapport — CRM (`/crm`)
+- **Design**: `salescrm.jsx · CrmModule2` + `crmfields.jsx`. **8/10.** Bord +
+  instelbare kolommen/filters/eigen-velden + KvK-flow 1:1 in gedrag. Afwijkingen:
+  NL-kaart vervangen door bord, KvK-helpers als demo-equivalent, klantkaart houdt
+  inline company-meta naast de nieuwe `CardKpiStrip`.
+
+### Klikpad — /crm
+1. **/crm**: bovenaan het **tegelbord** (Bewerk in de topbar → tegels slepen +
+   S/M/L/XL + Widget toevoegen).
+2. Daaronder de **tools**: zoek · tabs (Alle/Actief/Vraagt aandacht/Win-back/
+   Prospect) · sorteer (Aandacht/Risico/Waarde/Naam) · **Filter** · **Kolommen**
+   (incl. "Eigen veld maken").
+3. **Tabel**: klik een rij → de gedeelde **klantkaart** opent (met instelbare
+   **KPI-strip** bovenaan).
+4. **Nieuwe klant** (hero) → **KvK-flow**: zoek "Hotel Okura" → "Al in CRM" →
+   koppel contactpersoon; of een nieuw bedrijf → autovullen → opslaan.
+
+### Status: af. commit + push hieronder.
+
+---
+
 ## Stap 15: De ontbrekende views uit Klant-dashboard.html (2026-06-28)
 
 ### Aanleiding
