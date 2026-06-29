@@ -328,6 +328,33 @@ export function TopBar({ view, go, edit, setEdit, onReset, openLib, flags, onLog
   )
 }
 
+/* View-as-balk: bovenbalk wanneer je in de werkruimte van een teamlid meekijkt.
+   Letterlijk uit de blauwdruk (shell.jsx · ViewAsBanner). stopViewAs/startViewAs
+   worden door de AppShell op window gezet (de view-as-lijm). */
+function vabInit(name) {
+  const p = (name || '').trim().split(/\s+/)
+  return ((p[0] && p[0][0] || '') + (p[1] && p[1][0] || '')).toUpperCase()
+}
+export function ViewAsBanner({ va, all, setAll, role, readonly }) {
+  const mem = va.mem
+  return (
+    <div className={'vab' + (readonly ? ' ro' : '')}>
+      <span className="vab-av" style={{ background: AC(mem.color || (role && role.accent) || 'navy') }}>{vabInit(mem.name)}</span>
+      <div className="vab-id">
+        <div className="vab-t">Je bekijkt de werkruimte van <b>{mem.name}</b></div>
+        <div className="vab-s">{role ? role.label : ''}{readonly ? ' · alleen-lezen' : ''} · zo ziet hun MyHorAIzon eruit</div>
+      </div>
+      <div className="vab-seg" title="Toon alleen hun modules of alles">
+        <button className={'vab-seg-b' + (!all ? ' on' : '')} onClick={() => setAll(false)}>Hun toegang</button>
+        <button className={'vab-seg-b' + (all ? ' on' : '')} onClick={() => setAll(true)}>Alle modules</button>
+      </div>
+      <button className="vab-stop" onClick={() => window.stopViewAs && window.stopViewAs()}>
+        <span dangerouslySetInnerHTML={{ __html: ICONS('close', { sw: 2.2 }) }} />Stop meekijken
+      </button>
+    </div>
+  )
+}
+
 /* Live agent-feed onder het dashboard-bord, exact uit de blauwdruk (shell.jsx). */
 export function AgentsFeed({ go }) {
   const m = MOD['agents']

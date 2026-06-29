@@ -11,7 +11,7 @@ import { KYANO } from './design/data'
 // Placeholder-routes voor elke blauwdruk-module die nog geen echte pagina heeft,
 // plus de losse views (iris, settings, vandaag, ...). De sidebar navigeert naar
 // '/{id}'; deze routes vangen ze op tot de module gebouwd is.
-const REAL_PAGES = new Set(['offertes', 'contracten', 'facturen', 'vandaag', 'postvak', 'sales', 'pipeline', 'crm', 'iris', 'website', 'seo', 'studio', 'finder', 'relatiebeheer', 'settings'])
+const REAL_PAGES = new Set(['offertes', 'contracten', 'facturen', 'vandaag', 'postvak', 'sales', 'pipeline', 'crm', 'iris', 'website', 'seo', 'studio', 'finder', 'relatiebeheer', 'settings', 'people'])
 const PLACEHOLDER_ROUTES = [
   ...KYANO.modules.map((m) => ({ id: m.id, label: m.name })),
   { id: 'iris', label: 'Iris' },
@@ -33,6 +33,7 @@ import FinderPage from './pages/FinderPage'
 import RelatiebeheerPage from './pages/RelatiebeheerPage'
 import SettingsPage from './pages/SettingsPage'
 import CrmPage from './pages/CrmPage'
+import TeamPage from './pages/TeamPage'
 import DashboardPage from './pages/DashboardPage'
 import QuotesListPage from './pages/QuotesListPage'
 import QuoteDetailPage from './pages/QuoteDetailPage'
@@ -80,6 +81,7 @@ export default function App() {
               <Route path="relatiebeheer" element={<RelatiebeheerPage />} />
               <Route path="settings" element={<SettingsPage />} />
               <Route path="crm" element={<CrmPage />} />
+              <Route path="people" element={<TeamPage />} />
               <Route path="offertes" element={<QuotesListPage />} />
               <Route path="offertes/:id" element={<QuoteDetailPage />} />
               <Route path="contracten" element={<ContractsListPage />} />

@@ -4,6 +4,92 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 18: Team-module (/people) volledig uit het Design + view-as-laag (2026-06-29)
+
+### Aanleiding
+`/people` was een `PlaceholderPage`. Gevraagd: 10/10-port van de complete
+Team-module uit de Claude Design MCP (`dashboard/team.jsx`), inclusief de
+view-as-laag uit `dashboard/shell.jsx`. Niks inkorten, niks verzinnen.
+
+### Bron (live opgehaald + geciteerd)
+- **`dashboard/team.jsx`** — `TeamModule`, `MemberCard`, `AiCard`, `ManageModal`,
+  `InviteModal`, `TEAM_ROLES` (6 rollen), `CAPS` (view/edit/full), `SEED_TEAM`
+  (5 leden), `defaultMods`/`defaultCap`. Eindigt op
+  `Object.assign(window, { TeamModule, TEAM_ROLES, memberMods })`.
+- **`dashboard/shell.jsx`** — view-as: `flagsForView(allowed)`, `ViewAsBanner`,
+  en in `App()`:
+  `window.startViewAs = (mem, allowed) => { window.__viewAs = mem; … setViewAs({ mem, allowed }); go("dashboard"); }`
+  / `window.stopViewAs = () => { window.__viewAs = null; setViewAs(null); go("people"); }`.
+  Dispatch in `dashboard/pages.jsx`:
+  `if (id === "people" && window.TeamModule) return <div className="module-page"><TeamModule m={m} onOpen={onOpen} /></div>;`
+
+### Gebouwd
+- **`src/design/team.jsx`** (NIEUW) — letterlijke ESM-port. Volledig rollen-model,
+  5 seed-leden, rollen-filterbalk, selecteer-modus + bulk (rol toewijzen /
+  verwijderen), uitnodig-flow, `ManageModal` met 3 tabs (Profiel/NAW · Rechten:
+  rol-picker + cap-segment + cascade-toggle + per-module-toegang met vergrendelde
+  kern-modules · Activiteit-timeline), en de Iris-`AiCard`.
+- **`src/pages/TeamPage.jsx`** (NIEUW) — rendert `<div className="module-page">
+  <TeamModule onOpen={go}/></div>` exact zoals de pages.jsx-dispatch; achter
+  `useModuleSettings('team')` (kern-module → altijd aan).
+- **`src/App.jsx`** — `people` toegevoegd aan `REAL_PAGES`; `import TeamPage`;
+  `<Route path="people" element={<TeamPage />} />`. Geen `PlaceholderPage` meer.
+- **View-as-laag** in de repo-shell: `ViewAsBanner` + `vabInit` geport naar
+  `src/design/shell.jsx` (geëxporteerd); `flagsForView` + de window-lijm
+  (`startViewAs`/`stopViewAs`, `window.__viewAs`) + `effFlags`/`vaReadonly`/
+  `vaRole` in `src/components/AppShell.jsx`. De "Bekijk"-knop op een teamlid
+  opent nu echt de werkruimte van dat lid: `ViewAsBanner` bovenin, sidebar
+  gefilterd op hun modules, "Hun toegang ↔ Alle modules", en "Stop meekijken"
+  keert terug naar /people. Alleen zichtbaar voor Eigenaar/Beheerder/Kyano
+  (`canViewAs`). Deze laag hebben we straks ook nodig voor het Kyano-dashboard.
+
+### Hergebruikt (NIET opnieuw gebouwd)
+- **`src/design/assign.jsx`** — cascade: `currentRole`, `canAssignRole`,
+  `setAssignPolicy`, `ASSIGN_ROLE_DEFAULTS`, `logToMember`. team.jsx importeert
+  die uit assign.jsx (ESM). assign.jsx leest `window.TEAM_ROLES` en
+  `window.__viewAs` → team.jsx zet `window.TEAM_ROLES = TEAM_ROLES` en de shell
+  zet `window.__viewAs`, zodat de cascade ongewijzigd blijft.
+- `store.jsx` (`useStore/setState/toast/confirmAsk/Modal/Field`), `components.jsx`
+  (`Avatar/AC/ACsoft`), `icons.js`, `data.js` (people-entry/KPI). Alle `.tm-`
+  (218 regels), `.vab` (16) en `.app.viewas` (3) CSS stond al in `blueprint.css`.
+- De dode `__people_old`-tak uit pages.jsx is NIET overgenomen.
+
+### Trouw-rapport — Team (`/people`)
+- **Bron:** `dashboard/team.jsx` + view-as uit `dashboard/shell.jsx`. **Score: 9/10.**
+- UI, logica, rollen, caps, seed-data, ManageModal-tabs, bulk, invite en de
+  Iris-kaart zijn 1:1 verbatim. View-as werkt end-to-end. Cascade hergebruikt de
+  bestaande engine.
+- **Resterende afwijkingen (eerlijk, glue-niveau, geen functieverlies):**
+  1. `confirmAsk({body, confirm, accent:"red"})` → aangepast naar de repo-API
+     `confirmAsk({title, sub, confirmLabel})` (rood is daar de default).
+  2. `window.currentRole/canAssignRole/setAssignPolicy` → ESM-imports uit
+     assign.jsx; `window.startViewAs` bewust als window-lijm behouden.
+  3. View-as draait op react-router (`navigate('/')` / `navigate('/people')`)
+     i.p.v. de hash-router `go()` van de blauwdruk — zelfde gedrag.
+  4. `window.TEAM_ROLES` wordt gezet bij het laden van team.jsx; rol-labels in de
+     assign-UI elders vallen tot dan terug op de rol-sleutel (graceful).
+  5. `TeamModule`'s ongebruikte `m`-prop niet doorgegeven (alleen `onOpen`).
+
+### Poorten
+- `npm run build`: GROEN (1910 modules). `npm run lint`: 0 errors (3 pre-existing
+  warnings). `npm run test:knoppen /people` (live dev-server `:5174`): **GROEN —
+  54 knoppen getest, geen dode klikken.**
+
+### Klikpad — /people
+- Open `/people` → 5 teamleden + Iris-kaart, rollen-filterbalk met tellers.
+- Rollen-filter: klik "Manager" → toont alleen Sanne; klik weer → iedereen.
+- "Beheer" op een lid → `ManageModal`: tabs Profiel (NAW), Rechten (rol-picker +
+  cap + "Mag toewijzen"-cascade + per-module-toegang, kern-modules vergrendeld),
+  Activiteit (timeline).
+- "Uitnodigen" → `InviteModal`: naam/e-mail/functie + rol-picker → toast
+  "uitgenodigd als …", lid verschijnt met status "Uitgenodigd".
+- "Selecteren" → bulk-balk: selecteer leden → "Rol toewijzen" / "Verwijderen".
+- "Bekijk" op een lid → view-as: `ViewAsBanner` bovenin, sidebar gefilterd op hun
+  modules, "Stop meekijken" keert terug naar /people. Eigenaar↔Kyano-schakelaar
+  toont de Kyano-context-balk.
+
+---
+
 ## Stap 17: Huisstijl-polish — merk-iconen, lettertypes, NL-kaart terug (2026-06-29)
 
 ### Aanleiding
