@@ -4,6 +4,58 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 25: IST/SOLL/Bouwplan-widgets — nu uit het Design geport (2026-06-30)
+
+### Aanleiding
+Ramon heeft de Design-prompt uit stap 24 in Claude Design uitgevoerd. Het Design
+(`dashboard/kyanobeheer.jsx · KbClientPage`) heeft nu de drie discovery-widgets
+in de juiste vorm. Niet meer zelf bedacht — 1:1 geport.
+
+### Bron-check (live, MCP) — 10/10
+`KbClientPage` heeft nu naast Modules/Gegevens/Agents/Koppelingen drie extra
+`<Panel wid="…">`-widgets in dezelfde vorm: **Huidig proces (IST)**,
+**Optimaal proces (SOLL)**, **Bouwplan**, plus een `KbKlaarModal` ("Zet klant
+klaar") en `KB_SOLL_CHG`/`KB_OPP`. Gevoed door de echte brain-velden
+(`hypothesized_flows`/`validated_flows`/`flow_details.step_pills.opportunity`,
+`soll.flows`+`soll_change`/`wat_kyano_bouwt`/`winst_indicatie`/`build_mapping`,
+`build_plan.provisioning`+`maatwerk`+`summary`). Mock 1:1 overgenomen.
+
+### Geport
+- **`src/design/discovery-demo.js`** — de Design-mock (Sloepenspel) verbatim in de
+  echte brain-vorm. SEAM: `getDiscovery()` wordt in deel 4 de Supabase-query op
+  `discovery_sessions.metadata` (query als comment).
+- **`src/design/kyanobeheer.jsx`** — de drie widgets toegevoegd aan `KbClientPage`
+  (na de 4 panelen), in dezelfde Panel-vorm als de rest (`Panel` + `tm-modrow` +
+  `kyb-badge`), met `KB_SOLL_CHG`/`KB_OPP`, en `KbKlaarModal`.
+- **Keten:** "Zet klant klaar" → `KbKlaarModal` → `applyProvisioning` zet de
+  aanbevolen `custom_modules`/`active_agents` echt aan voor de tenant
+  (`updateTenant`, union). Provisioning-key `contracten` → repo-key `contracts`.
+
+### Eerlijke afwijking (vorm)
+Het Design rendert de detailpagina met `kb-*`-klassen (`kb-page/kb-hero/kb-mgroup/
+kb-mrows/kb-krow/…`); die CSS zit niet in de repo en is niet via de MCP op te
+halen (alleen ge-inlined in de afgekapte standalone). Daarom draait de héle
+detailpagina (deel 2 + deze widgets) op de repo-eigen, visueel gelijke vorm
+(`Panel` + `tm-modrow` + `kyb-*` + inline-tokens) — consistent met álle andere
+panelen in de repo. Structuur, data, labels en flow zijn 1:1 het Design.
+
+### Poorten
+- `npm run build`: GROEN. `npm run lint`: 0 errors (3 pre-existing warnings).
+  `npm run test:knoppen /beheer` (live `:5174`): **GROEN — 46 knoppen.**
+- Headless geverifieerd: 7 panelen renderen; IST/SOLL-badges zichtbaar; "Zet klant
+  klaar" → provisioning-modal (Sales/Contracten) → tenant `custom_modules` bevat
+  ze → bij de klant staan Sales + Contracten in de sidebar.
+
+### Klikpad — /beheer
+- Open Sloepenspel → onder de 4 panelen: **Huidig proces** (3 flows met owner/tool
+  + terugkerend handwerk/wachttijd + Bevestigd/Niet bevestigd), **Optimaal proces**
+  (change-badges + wat-Kyano-bouwt + agent, status Concept), **Bouwplan**
+  (provisioning Sales/Contracten · iris/hugo/juris/sam · trial + maatwerk Offertes/
+  Agenda/Facturen). **Zet klant klaar** → modal → Modules aanzetten → bij de klant
+  staan de modules aan.
+
+---
+
 ## Stap 24: Verzonnen deel-3-panelen teruggedraaid (Design = bron) (2026-06-30)
 
 ### Aanleiding

@@ -20,8 +20,20 @@ import { ICONS } from './icons'
 import { toast, confirmAsk, notImplemented, Modal, Field } from './store.jsx'
 import { AC, ACsoft, Avatar, Btn, Panel } from './components.jsx'
 import { MODULES } from '../tenant/modules'
+import { getDiscovery } from './discovery-demo.js'
 
 const { useState } = React
+
+/* SOLL change-badge per stap (1:1 uit de Design · KB_SOLL_CHG) */
+const KB_SOLL_CHG = {
+  blijft: { label: 'Blijft', accent: 'navy', icon: null },
+  automatisch: { label: 'Automatisch', accent: 'green', icon: 'spark' },
+  vervalt: { label: 'Vervalt', accent: 'red', icon: null },
+  nieuw: { label: 'Nieuw', accent: 'aqua', icon: 'plus' },
+}
+const KB_OPP = { repetitief: 'terugkerend handwerk', wachttijd: 'wachttijd' }
+/* provisioning-module-keys uit het bouwplan -> repo-tenant-module-keys (modules.js) */
+const PROV_KEY = (k) => (k === 'contracten' ? 'contracts' : k)
 
 /* ---- de 8 agents (canoniek; iris altijd aan) ---- */
 const KB_AGENTS = {
@@ -269,6 +281,26 @@ function KbClientPage({ t, onPatch, onBack, onRemove, onOpenDashboard }) {
   const [pkgSel, setPkgSel] = useState(c.package)
   const [statusSel, setStatusSel] = useState(c.status)
   const [koppel, setKoppel] = useState(null)
+  const [klaarOpen, setKlaarOpen] = useState(false)
+
+  // SEAM: demo-Discovery in de echte brain-vorm (discovery-demo.js). Deel 4
+  // vervangt getDiscovery() door een query op discovery_sessions.metadata.
+  const discovery = getDiscovery(t.id)
+
+  // "Zet klant klaar": de provisioning uit het bouwplan echt aanzetten voor de
+  // tenant (union — aanzetten, niets weghalen). Sluit de keten Discovery → modules.
+  const applyProvisioning = () => {
+    const prov = (discovery && discovery.build_plan && discovery.build_plan.provisioning) || null
+    if (!prov) return
+    const recMods = (prov.custom_modules || []).map(PROV_KEY)
+    const nextMods = [...new Set([...(t.custom_modules || []), ...recMods])]
+    const nextAgents = [...new Set([...(t.active_agents || ['iris']), ...(prov.active_agents || [])])]
+    const ms = { ...(t.module_settings || {}) }
+    recMods.forEach((k) => { ms[k] = { enabled: true, settings: ms[k]?.settings || {} } })
+    onPatch(t.id, { custom_modules: nextMods, active_agents: nextAgents, module_settings: ms })
+    setKlaarOpen(false)
+    toast(c.company + ' klaargezet · ' + recMods.length + ' modules aan, ' + nextAgents.length + ' agents', { icon: 'check' })
+  }
 
   const toggleModule = (key) => {
     const on = c.custom_modules.includes(key)
@@ -423,9 +455,110 @@ function KbClientPage({ t, onPatch, onBack, onRemove, onOpenDashboard }) {
         </Panel>
       </div>
 
+      {/* ── Discovery-widgets (1:1 uit de Design · KbClientPage), gevoed door de
+          brain-vorm (discovery-demo.js). Zelfde Panel-vorm als de panelen boven. ── */}
+      {discovery && (<>
+        <div style={{ ...SEC, fontSize: 12, margin: '22px 0 8px' }}>Discovery · onboarding</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(340px,1fr))', gap: 16 }}>
+          {/* Huidig proces (IST) */}
+          <Panel title="Huidig proces" eyebrow="Wat de klant nu doet" accent="navy">
+            {discovery.hypothesized_flows.map((flow, fi) => {
+              const v = (discovery.validated_flows || []).find((x) => x.flow_index === fi)
+              const ok = !!(v && v.validated)
+              const pills = ((discovery.flow_details || {})['flow_' + fi] || {}).step_pills || {}
+              return (
+                <div key={fi} style={{ marginBottom: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '4px 0 6px', flexWrap: 'wrap' }}>
+                    <b style={{ fontSize: 13.5 }}>{flow.name}</b>
+                    <span className="kyb-badge" style={{ color: AC('navy'), background: ACsoft('navy') }}>{flow.category_nl}</span>
+                    <span className="kyb-badge" style={{ color: AC(ok ? 'green' : 'gold'), background: ACsoft(ok ? 'green' : 'gold') }}><span className="kyb-badge-dot" style={{ background: AC(ok ? 'green' : 'gold') }} />{ok ? 'Bevestigd' : 'Niet bevestigd'}</span>
+                  </div>
+                  {flow.steps.map((step, si) => { const p = pills[step] || {}; return (
+                    <div key={si} className="tm-modrow" style={{ cursor: 'default' }}>
+                      <span className="tm-modrow-ic" style={{ color: AC('navy'), background: ACsoft('navy'), fontSize: 11, fontWeight: 700 }}>{si + 1}</span>
+                      <div className="tm-modrow-main"><div className="tm-modrow-name">{step}</div><div className="tm-modrow-grp">{[p.owner, p.sample_answer].filter(Boolean).join(' · ') || 'nog onbekend'}</div></div>
+                      {p.opportunity && <span className="kyb-badge" style={{ color: AC('orange'), background: ACsoft('orange') }}>{KB_OPP[p.opportunity] || p.opportunity}</span>}
+                    </div>
+                  ) })}
+                </div>
+              )
+            })}
+          </Panel>
+
+          {/* Optimaal proces (SOLL) */}
+          <Panel title="Optimaal proces" eyebrow="Wat Kyano bouwt" accent="green"
+            right={(() => { const fin = discovery.soll.status === 'gefinaliseerd'; return (
+              <span className="kyb-badge" style={{ color: AC(fin ? 'green' : 'gold'), background: ACsoft(fin ? 'green' : 'gold') }}><span className="kyb-badge-dot" style={{ background: AC(fin ? 'green' : 'gold') }} />{fin ? 'Gefinaliseerd' : 'Concept'}</span>
+            ) })()}>
+            <p style={{ fontSize: 12.5, lineHeight: 1.5, color: 'var(--ink2)', margin: '0 0 12px' }}>{discovery.soll.macro}</p>
+            {discovery.soll.flows.map((flow, fi) => {
+              const pills = ((discovery.soll.flow_details || {})['flow_' + fi] || {}).step_pills || {}
+              return (
+                <div key={fi} style={{ marginBottom: 14 }}>
+                  <div style={{ margin: '4px 0 2px' }}><b style={{ fontSize: 13.5 }}>{flow.name}</b></div>
+                  <div className="mono" style={{ fontSize: 11.5, color: 'var(--ink3)', margin: '0 0 6px' }}>{flow.verhaal}</div>
+                  {flow.steps.map((step, si) => {
+                    const p = pills[step] || {}; const chg = KB_SOLL_CHG[p.soll_change] || KB_SOLL_CHG.blijft
+                    const auto = p.soll_change === 'automatisch' || p.soll_change === 'nieuw'
+                    return (
+                      <div key={si} className="tm-modrow" style={{ cursor: 'default', alignItems: 'flex-start' }}>
+                        <span className="kyb-badge" style={{ color: AC(chg.accent), background: ACsoft(chg.accent), flex: '0 0 auto', marginTop: 1 }}>{chg.icon && <span dangerouslySetInnerHTML={{ __html: ICONS(chg.icon, { sw: 2 }) }} />}{chg.label}</span>
+                        <div className="tm-modrow-main"><div className="tm-modrow-name" style={p.soll_change === 'vervalt' ? { textDecoration: 'line-through', opacity: 0.65 } : null}>{step}</div>{auto && (p.wat_kyano_bouwt || p.winst_indicatie) && <div className="tm-modrow-grp">{[p.wat_kyano_bouwt, p.winst_indicatie].filter(Boolean).join(' · ')}</div>}</div>
+                        {p.build_mapping && p.build_mapping.agent_naam && <span className="kyb-badge" style={{ color: AC('teal'), background: ACsoft('teal'), flex: '0 0 auto' }}>{p.build_mapping.agent_naam}</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </Panel>
+
+          {/* Bouwplan */}
+          <Panel title="Bouwplan" eyebrow="Provisioning &amp; maatwerk" accent="gold">
+            {(() => { const bp = discovery.build_plan; const prov = bp.provisioning; const sm = bp.summary || {}; return (<>
+              <div style={SEC}>Provisioning · {(KB_PROV[prov.status] || KB_PROV.trial).label}</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                {prov.custom_modules.map((mk) => <span key={mk} className="kyb-badge" style={{ color: AC('gold'), background: ACsoft('gold') }}>{MODULE_LABEL[PROV_KEY(mk)] || mk}</span>)}
+              </div>
+              <div className="mono" style={{ fontSize: 11.5, color: 'var(--ink3)' }}>{prov.active_agents.map((a) => KB_AGENTS[a]?.naam || a).join(' · ')}</div>
+              <div className="mono" style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 6 }}>{sm.stappen_gemapt} stappen · {sm.config} config · {sm.custom} maatwerk · {sm.te_bouwen_modules} te bouwen</div>
+              <div style={SEC}>Maatwerk-backlog</div>
+              {bp.maatwerk.map((m, mi) => (
+                <div key={mi} className="tm-modrow" style={{ cursor: 'default' }}>
+                  <span className="tm-modrow-ic" style={{ color: AC('purple'), background: ACsoft('purple') }} dangerouslySetInnerHTML={{ __html: ICONS('brush', { sw: 1.9 }) }} />
+                  <div className="tm-modrow-main"><div className="tm-modrow-name">{m.module_label} · {m.agent_naam}</div><div className="tm-modrow-grp">{m.bouwopdracht.title}</div></div>
+                  <span className="kyb-badge" style={{ color: AC('gold'), background: ACsoft('gold') }}>nog te bouwen</span>
+                </div>
+              ))}
+              {bp.maatwerk.length === 0 && <div className="kyb-empty mono" style={{ padding: 12 }}>Geen maatwerk nodig, alles is configuratie.</div>}
+              <div style={{ marginTop: 12 }}><Btn kind="solid" accent="green" icon="check" full onClick={() => setKlaarOpen(true)}>Zet klant klaar</Btn></div>
+            </>) })()}
+          </Panel>
+        </div>
+      </>)}
+
       {koppel != null && c.tools[koppel] && <KbKoppelModal tool={c.tools[koppel]} onClose={() => setKoppel(null)}
         onDone={() => { setToolStatus(koppel, 'gekoppeld'); toast(c.tools[koppel].naam + ' gekoppeld', { icon: 'check' }); setKoppel(null) }} />}
+      {klaarOpen && discovery && <KbKlaarModal c={c} discovery={discovery} onClose={() => setKlaarOpen(false)} onConfirm={applyProvisioning} />}
     </div>
+  )
+}
+
+/* ---- provisioning-bevestiging "Zet klant klaar" (1:1 uit de Design · KbKlaarModal) ---- */
+function KbKlaarModal({ c, discovery, onClose, onConfirm }) {
+  const prov = discovery.build_plan.provisioning; const sm = discovery.build_plan.summary || {}
+  return (
+    <Modal eyebrow="Provisioning" title={c.company + ' klaarzetten'} accent="green" onClose={onClose}
+      footer={<><button className="tm-mbtn ghost" onClick={onClose}>Annuleren</button>
+        <button className="tm-mbtn solid" onClick={onConfirm}><span dangerouslySetInnerHTML={{ __html: ICONS('check', { sw: 2 }) }} />Modules aanzetten</button></>}>
+      <div className="tm-rm">
+        <p style={{ fontSize: 13.5, lineHeight: 1.5, color: 'var(--ink2)', margin: '0 0 8px' }}>We zetten de modules uit het bouwplan aan en activeren de afgesproken agents voor {c.company}.</p>
+        <div style={SEC}>Wat er wordt aangezet</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>{prov.custom_modules.map((mk) => <span key={mk} className="kyb-badge" style={{ color: AC('navy'), background: ACsoft('navy') }}>{MODULE_LABEL[PROV_KEY(mk)] || mk}</span>)}</div>
+        <div className="mono" style={{ fontSize: 11.5, color: 'var(--ink3)', marginTop: 8 }}>Agents: {prov.active_agents.map((a) => KB_AGENTS[a]?.naam || a).join(', ')}</div>
+        <div className="mono" style={{ fontSize: 11, color: 'var(--ink3)', marginTop: 4 }}>{sm.config} configuratie · {sm.custom} maatwerk · {sm.te_bouwen_modules} nog te bouwen · status {(KB_PROV[prov.status] || KB_PROV.trial).label}</div>
+      </div>
+    </Modal>
   )
 }
 
