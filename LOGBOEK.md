@@ -4,6 +4,79 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 20: Leadfinder + Relatiebeheer herzien naar het nieuwe Design (2026-06-29)
+
+### Aanleiding
+De klant heeft in de Claude Design MCP (project a948021d, `Klant-dashboard
+(standalone).html`) de Leadfinder en Relatiebeheer opnieuw vormgegeven. Deze twee
+pagina's bijwerken naar het nieuwe ontwerp, alle knoppen werkend.
+
+### Bron-diff (live opgehaald + geciteerd)
+- **Leadfinder** — `dashboard/salescrm.jsx · FinderModule` (+ nieuwe `BranchePicker`):
+  - Hero-logo: het zoek-icoon-blok → `<img className="sales-hero-logo"
+    src=…sales-mark>` (zelfde ronde merk-mark als Sales/Pipeline).
+  - Branche-keuze: de altijd-open inline-lijst → een **ingeklapte chip-rij +
+    dropdown** (`BranchePicker`): chips + knop "Branche kiezen" die een
+    `fn-branche-menu` opent met zoekveld, groep-tabs, kieslijst en een voet
+    ("… branches gekozen" + Klaar). Chips/lijst tonen niet langer de
+    place-type-code.
+- **Relatiebeheer** — `dashboard/salestasks.jsx · SalesRelatiePage`:
+  - Kop: `page-head-bar` + grijs people-icoon → `sx-hero` met `sales-hero-logo`
+    + gelabelde **"Signalen"**-knop (opent de bestaande `RelatieSignalMenu`) +
+    rode "Open CRM".
+  - Filters: `rel-filterbar`/`seg-pick` + los tandwiel → `st-tabbar`/`st-tab`
+    met teller op "Vragen aandacht" + hint-regel (zoals Pipeline).
+
+### Gebouwd
+- **`src/design/leadfinder.jsx`** — `BranchePicker` toegevoegd (verbatim uit de
+  bron, `window.useSmartMenu` → geïmporteerde `useSmartMenu`); `FinderModule`-kop
+  naar `sales-hero-logo`; inline-picker vervangen door `<BranchePicker/>`; de
+  niet meer gebruikte `query`/`activeGroup`/`pickItems`-state verwijderd. Kaart-
+  laag (`buildMapSvg`/`FinderMap`/`FinderMapCard`), modi, parameters, resultaten
+  (lijst/kaart/beide) en "Goedgekeurde leads" ongewijzigd.
+- **`src/design/salestasks.jsx`** — `SalesRelatiePage`-kop + filterbalk vervangen
+  door de nieuwe `sx-hero` + `st-tabbar`. De `RelatieSignalMenu` (bestaand) en de
+  klantenlijst (`sx-rel-row` + `ObjectActions`) ongewijzigd.
+- **`src/design/blueprint.css`** — 12 regels voor de nieuwe `BranchePicker`-
+  wrappers (`fn-branche`, `fn-branche-row`, `fn-add-branche`, `fn-branche-menu`,
+  `fn-bm-search`, `fn-bm-foot`, `fn-bm-count`, `fn-bm-done`). Alle binnenste
+  klassen (`fn-chip`, `fn-groups`, `fn-grp`, `fn-pick-list`, `fn-type`,
+  `fn-search*`) bestonden al; Relatiebeheer hergebruikt bestaande klassen
+  (`sx-hero`, `st-tabbar`, `st-tab`, `sales-hero-logo`, `rel-set-wrap`,
+  `rel-setmenu`) — geen nieuwe CSS nodig daar.
+
+### Trouw-rapport. **Score: 9/10.**
+- **Bron:** `salescrm.jsx · FinderModule`/`BranchePicker` + `salestasks.jsx ·
+  SalesRelatiePage` (live geciteerd). JSX, classes, teksten en flow zijn 1:1.
+- **Afwijkingen (eerlijk):**
+  1. De volledige live-CSS staat alleen ge-inlined in de standalone-HTML, die op
+     256 KB werd afgekapt (achter een base64 `__resources`-blok), dus de exacte
+     pixels van de **8 nieuwe `BranchePicker`-wrapper-klassen** waren niet
+     ophaalbaar. Ze zijn met de hand geschreven in het bestaande `fn-*`/
+     `rel-setmenu`-idioom (tokens, radii, popover-stijl); alle binnenste
+     componenten gebruiken de echte Design-klassen verbatim.
+  2. `sales-mark` via repo-pad `/brand/sales-mark.svg` i.p.v. de bron-`ASSET()`.
+  3. `role="tab"`/`aria-selected` toegevoegd op `st-tab` en `fn-grp` (zoals de
+     repo elders al doet) — a11y + houdt de dode-klik-poort groen op actieve tabs.
+
+### Poorten
+- `npm run build`: GROEN (1910 modules). `npm run lint`: 0 errors (3 pre-existing
+  warnings). `npm run test:knoppen /finder /relatiebeheer` (live `:5174`):
+  **GROEN — 51 knoppen (finder 41, relatiebeheer 10), geen dode klikken.**
+
+### Klikpad
+- **/finder** → hero met merk-mark. Stap 1: kies modus (Branche+locatie ↔
+  Referentiebedrijf). "Branche kiezen" opent de dropdown → zoek/groep-tabs/
+  kieslijst, gekozen branches verschijnen als chips, "Klaar" sluit. Vul
+  locatie + straal + aantal → "Zoek leads" → Stap 2 resultaten (Lijst/Kaart/
+  Beide) met namaak-Maps-pins → "Goedkeuren" → Stap 3 "Goedgekeurde leads" →
+  "Naar pipeline + concepten".
+- **/relatiebeheer** → `sx-hero` + "Signalen"-knop (opent het dosering-menu) +
+  "Open CRM". `st-tabbar` (Vragen aandacht/Alle/Actief/Win-back/Oud) filtert de
+  klantenlijst; elke rij opent de klantkaart, `ObjectActions` per rij werkt.
+
+---
+
 ## Stap 19: View-as inhoudelijk afgemaakt — boards filteren op het teamlid (2026-06-29)
 
 ### Aanleiding

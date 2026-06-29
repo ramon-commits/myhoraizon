@@ -595,30 +595,30 @@ function SalesRelatiePage({ onOpen }) {
   const onCard = (id) => openKlantCard(id, "Relatiebeheer")
 
   return (
-    <div className="module-page" key="relatiebeheer">
-      <div className="page-head-bar">
-        <div className="phb-head">
-          <span className="phb-ic" style={{ color: AC("red"), background: ACsoft("red") }}><span dangerouslySetInnerHTML={{ __html: ICONS("people") }} /></span>
-          <div className="phb-id">
-            <div className="phb-title">Relatiebeheer</div>
-            <div className="phb-sub mono">{activeN} actieve klanten · {eur(activeVal)}/mnd · {attention.length} vragen aandacht</div>
+    <div className="module-page sales-suite" key="relatiebeheer">
+      <header className="sx-hero">
+        <img className="sales-hero-logo" src="/brand/sales-mark.svg" alt="Relatiebeheer" />
+        <div className="sx-hero-id">
+          <h1 className="sx-hero-h1">Relatiebeheer</h1>
+          <p className="sx-hero-sub mono">{activeN} actieve klanten · {eur(activeVal)}/mnd terugkerend · Iris seint wie aandacht verdient, jij bepaalt wat een taak wordt.</p>
+        </div>
+        <div className="sx-hero-acts">
+          <div className="rel-set-wrap" onPointerDown={(e) => e.stopPropagation()}>
+            <Btn kind={setOpen ? "solid" : "soft"} accent="navy" icon="sliders" size="sm" onClick={() => setSetOpen((v) => !v)}>Signalen</Btn>
+            {setOpen && <RelatieSignalMenu store={store} />}
           </div>
+          <Btn kind="solid" accent="red" icon="people" size="sm" onClick={() => onOpen("crm")}>Open CRM</Btn>
         </div>
-        <div className="phb-spacer" />
-        <div className="phb-actions">
-          <button className="tb-btn" onClick={() => onOpen("crm")}><span dangerouslySetInnerHTML={{ __html: ICONS("people", { sw: 2 }) }} />Open CRM</button>
-        </div>
-      </div>
+      </header>
 
-      <div className="rel-filterbar">
-        <div className="seg-pick">
-          {FILTERS.map(([k, lbl]) => <button key={k || "all"} role="tab" aria-selected={filter === k} className={"seg-opt" + (filter === k ? " on" : "")} style={filter === k ? { background: AC("red"), color: "#fff" } : null} onClick={() => setFilter(k)}>{lbl}</button>)}
-        </div>
-        <div className="phb-spacer" />
-        <div className="rel-set-wrap" onPointerDown={(e) => e.stopPropagation()}>
-          <button className={"rel-gear" + (setOpen ? " on" : "")} title="Signaal-instellingen" aria-label="Signaal-instellingen" onClick={() => setSetOpen((v) => !v)}><span dangerouslySetInnerHTML={{ __html: ICONS("sliders", { sw: 1.9 }) }} /></button>
-          {setOpen && <RelatieSignalMenu store={store} />}
-        </div>
+      <div className="st-tabbar">
+        {FILTERS.map(([k, lbl]) => (
+          <button key={k || "all"} role="tab" aria-selected={filter === k} className={"st-tab" + (filter === k ? " on" : "")} onClick={() => setFilter(k)}>
+            {lbl}
+            {k === "aandacht" && attention.length > 0 && <span className="st-tab-n">{attention.length}</span>}
+          </button>
+        ))}
+        <span className="st-tab-hint mono">{filter === "aandacht" ? "Klanten die nu opvolging vragen, op signaal-leeftijd gesorteerd" : "Sorteer op contactmoment, open een kaart of zet een actie klaar"}</span>
       </div>
 
       <div className="sx-rel-list rel-page-list">

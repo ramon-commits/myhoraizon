@@ -106,13 +106,88 @@ function FinderMap({ center, leads, straal, selected, onSelect, onApprove }) {
   )
 }
 
+/* Branche-kiezer: ingeklapte chip-rij + dropdown-menu (zoek + groepen + lijst).
+   Letterlijk uit de blauwdruk (salescrm.jsx · BranchePicker). De dropdown wordt
+   met de gedeelde useSmartMenu altijd in beeld geplaatst. */
+function BranchePicker({ types, toggleType, setTypes }) {
+  const [open, setOpen] = useStateCR(false)
+  const [query, setQuery] = useStateCR("")
+  const [activeGroup, setActiveGroup] = useStateCR(0)
+  const btnRef = useRefCR(null)
+  const menuRef = useSmartMenu({ align: "start", margin: 14, gap: 8, dep: open, anchorRef: btnRef })
+
+  useEffectCR(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    const esc = (e) => { if (e.key === "Escape") setOpen(false) }
+    window.addEventListener("pointerdown", close)
+    window.addEventListener("keydown", esc)
+    return () => { window.removeEventListener("pointerdown", close); window.removeEventListener("keydown", esc) }
+  }, [open])
+
+  const pickItems = useMemoCR(() => {
+    const q = query.trim().toLowerCase()
+    if (q) {
+      const out = []
+      PLACE_GROUPS.forEach((grp) => grp.items.forEach((it) => { if (it[0].toLowerCase().includes(q) || it[1].includes(q)) out.push(it) }))
+      return out.slice(0, 60)
+    }
+    return (PLACE_GROUPS[activeGroup] || PLACE_GROUPS[0]).items
+  }, [query, activeGroup])
+
+  return (
+    <div className="fn-branche">
+      <div className="fn-branche-row">
+        {types.map((k) => (
+          <span className="fn-chip" key={k}>
+            <span className="fn-chip-lbl">{placeLabel(k)}</span>
+            <button type="button" className="fn-chip-x" aria-label={"Verwijder " + placeLabel(k)} onPointerDown={(e) => e.stopPropagation()} onClick={() => toggleType(k)}>×</button>
+          </span>
+        ))}
+        <button type="button" ref={btnRef} className={"fn-add-branche" + (open ? " on" : "")} aria-expanded={open} onPointerDown={(e) => e.stopPropagation()} onClick={() => setOpen((v) => !v)}>
+          <span dangerouslySetInnerHTML={{ __html: ICONS("plus", { sw: 2.4 }) }} />{types.length === 0 ? "Branche kiezen" : "Branche"}
+        </button>
+        {types.length > 0 && <button type="button" className="fn-chip-clear" onPointerDown={(e) => e.stopPropagation()} onClick={() => setTypes([])}>Wis alles</button>}
+      </div>
+
+      {open && (
+        <div className="fn-branche-menu" ref={menuRef} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+          <div className="fn-bm-search">
+            <span className="fn-search-ic" dangerouslySetInnerHTML={{ __html: ICONS("search", { sw: 2 }) }} />
+            <input className="fn-search" autoFocus value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Zoek een branche, bv. kapper, hotel…" />
+            {query && <button type="button" className="fn-search-x" onClick={() => setQuery("")} aria-label="Wis zoekopdracht">×</button>}
+          </div>
+          {!query && (
+            <div className="fn-groups">
+              {PLACE_GROUPS.map((grp, i) => <button type="button" role="tab" aria-selected={activeGroup === i} key={grp.g} className={"fn-grp" + (activeGroup === i ? " on" : "")} onClick={() => setActiveGroup(i)}>{grp.g}</button>)}
+            </div>
+          )}
+          <div className="fn-pick-list">
+            {pickItems.map(([label, key]) => {
+              const on = types.includes(key)
+              return (
+                <button type="button" key={key + label} className={"fn-type" + (on ? " on" : "")} style={on ? { background: AC("aqua"), color: "#fff", borderColor: "transparent" } : null} onClick={() => toggleType(key)}>
+                  <span className="fn-type-mark">{on ? "✓" : "+"}</span>{label}
+                </button>
+              )
+            })}
+            {pickItems.length === 0 && <div className="fn-no-match mono">Geen branche gevonden voor “{query}”.</div>}
+          </div>
+          <div className="fn-bm-foot">
+            <span className="fn-bm-count mono">{types.length === 0 ? "Nog niets gekozen" : types.length + (types.length === 1 ? " branche gekozen" : " branches gekozen")}</span>
+            <button type="button" className="fn-bm-done" onClick={() => setOpen(false)}>Klaar</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function FinderModule({ onOpen }) {
   const store = useStore()
   const [mode, setMode] = useStateCR("branche") // branche | ref
   const [ref, setRef] = useStateCR("")
   const [locatie, setLocatie] = useStateCR("")
-  const [query, setQuery] = useStateCR("")
-  const [activeGroup, setActiveGroup] = useStateCR(0)
   const [phase, setPhase] = useStateCR("idle") // idle|detecting|detected|searching|results
   const [refCo, setRefCo] = useStateCR(null)
   const [types, setTypes] = useStateCR([]) // Google place-type-keys
@@ -124,18 +199,6 @@ export function FinderModule({ onOpen }) {
   const [selected, setSelected] = useStateCR(null)
   const [center, setCenter] = useStateCR(null)
 
-  // branche-keuze: zoekresultaten over alle groepen, anders de actieve groep
-  const pickItems = useMemoCR(() => {
-    const q = query.trim().toLowerCase()
-    if (q) {
-      const out = []
-      PLACE_GROUPS.forEach((grp) => grp.items.forEach((it) => {
-        if (it[0].toLowerCase().includes(q) || it[1].includes(q)) out.push(it)
-      }))
-      return out.slice(0, 60)
-    }
-    return (PLACE_GROUPS[activeGroup] || PLACE_GROUPS[0]).items
-  }, [query, activeGroup])
   const showPicker = mode === "branche" || (mode === "ref" && !!refCo && phase !== "detecting")
 
   const approved = store.get("finder.approved", [])
@@ -193,9 +256,7 @@ export function FinderModule({ onOpen }) {
   return (
     <div className="module-page sales-suite" key="finder">
       <header className="sx-hero">
-        <div className="sx-hero-logo" style={{ "--acc": "var(--a-red)", "--acc-soft": "var(--a-red-soft)" }}>
-          <span className="sx-hero-mark" dangerouslySetInnerHTML={{ __html: ICONS("search", { sw: 1.8 }) }} style={{ color: "var(--a-red)" }} />
-        </div>
+        <img className="sales-hero-logo" src="/brand/sales-mark.svg" alt="Leadfinder" />
         <div className="sx-hero-id"><h1 className="sx-hero-h1">Leadfinder</h1><p className="sx-hero-sub mono">Vind nieuwe klanten in de buurt, Kai scrapet bedrijven, vindt e-mails en checkt je CRM</p></div>
       </header>
 
@@ -232,40 +293,8 @@ export function FinderModule({ onOpen }) {
 
         {showPicker && (
           <div className="fn-picker">
-            <div className="fn-types-lbl mono">{mode === "ref" ? "Voorgestelde branches — pas aan of voeg toe:" : "Kies één of meer branches:"}</div>
-            {types.length > 0 && (
-              <div className="fn-chips">
-                {types.map((k) => (
-                  <span className="fn-chip" key={k}>
-                    <span className="fn-chip-lbl">{placeLabel(k)}</span>
-                    <code className="fn-chip-key mono">{k}</code>
-                    <button type="button" className="fn-chip-x" aria-label={"Verwijder " + placeLabel(k)} onClick={() => toggleType(k)}>×</button>
-                  </span>
-                ))}
-                <button type="button" className="fn-chip-clear" onClick={() => setTypes([])}>Wis alles</button>
-              </div>
-            )}
-            <div className="fn-search-wrap">
-              <span className="fn-search-ic" dangerouslySetInnerHTML={{ __html: ICONS("search", { sw: 2 }) }} />
-              <input className="fn-search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Zoek een branche, bv. kapper, makelaar, hotel…" />
-              {query && <button type="button" className="fn-search-x" onClick={() => setQuery("")} aria-label="Wis zoekopdracht">×</button>}
-            </div>
-            {!query && (
-              <div className="fn-groups">
-                {PLACE_GROUPS.map((grp, i) => <button type="button" role="tab" aria-selected={activeGroup === i} key={grp.g} className={"fn-grp" + (activeGroup === i ? " on" : "")} onClick={() => setActiveGroup(i)}>{grp.g}</button>)}
-              </div>
-            )}
-            <div className="fn-pick-list">
-              {pickItems.map(([label, key]) => {
-                const on = types.includes(key)
-                return (
-                  <button type="button" key={key + label} className={"fn-type" + (on ? " on" : "")} style={on ? { background: AC("aqua"), color: "#fff", borderColor: "transparent" } : null} onClick={() => toggleType(key)}>
-                    <span className="fn-type-mark">{on ? "✓" : "+"}</span>{label}<code className="fn-type-key mono">{key}</code>
-                  </button>
-                )
-              })}
-              {pickItems.length === 0 && <div className="fn-no-match mono">Geen branche gevonden voor “{query}”.</div>}
-            </div>
+            <div className="fn-types-lbl mono">{mode === "ref" ? "Voorgestelde branches — pas aan of voeg toe" : "Branches"}</div>
+            <BranchePicker types={types} toggleType={toggleType} setTypes={setTypes} />
           </div>
         )}
 
