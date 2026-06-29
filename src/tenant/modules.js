@@ -11,24 +11,24 @@
    ============================================================ */
 export const MODULES = [
   // ── core (brein) ──
-  { key: 'dashboard', kind: 'core', label: 'Dashboard', route: '' },
-  { key: 'settings', kind: 'core', label: 'Beheer', route: 'settings' },
-  { key: 'iris', kind: 'core', label: 'Iris', route: 'iris' },
-  { key: 'clients', kind: 'core', label: 'Klanten', route: 'crm' },
-  { key: 'team', kind: 'core', label: 'Team', route: 'people' },
-  { key: 'library', kind: 'core', label: 'Bibliotheek', route: 'library' },
-  { key: 'radar', kind: 'core', label: 'Radar', route: 'radar' },
-  { key: 'patterns', kind: 'core', label: 'Patronen', route: 'patterns' },
+  { key: 'dashboard', kind: 'core', label: 'Dashboard', route: '', status: 'live' },
+  { key: 'settings', kind: 'core', label: 'Beheer', route: 'settings', status: 'live' },
+  { key: 'iris', kind: 'core', label: 'Iris', route: 'iris', status: 'live' },
+  { key: 'clients', kind: 'core', label: 'Klanten', route: 'crm', status: 'live' },
+  { key: 'team', kind: 'core', label: 'Team', route: 'people', status: 'live' },
+  { key: 'library', kind: 'core', label: 'Bibliotheek', route: 'library', status: 'gepland' },
+  { key: 'radar', kind: 'core', label: 'Radar', route: 'radar', status: 'gepland' },
+  { key: 'patterns', kind: 'core', label: 'Patronen', route: 'patterns', status: 'gepland' },
   // ── core (myhoraizon) ──
-  { key: 'vandaag', kind: 'core', label: 'Vandaag', route: 'vandaag' },
-  { key: 'postvak', kind: 'core', label: 'Inbox', route: 'postvak' },
-  // ── custom (komt nog) ──
-  { key: 'sales', kind: 'custom', label: 'Sales', route: 'sales' },
-  { key: 'website', kind: 'custom', label: 'Website', route: 'website' },
-  { key: 'social', kind: 'custom', label: 'Social media', route: 'social' },
-  { key: 'contracts', kind: 'custom', label: 'Contracten', route: 'contracten' },
-  { key: 'club', kind: 'custom', label: 'Club Kyano', route: 'club' },
-  { key: 'events', kind: 'custom', label: 'Events', route: 'events' },
+  { key: 'vandaag', kind: 'core', label: 'Vandaag', route: 'vandaag', status: 'live' },
+  { key: 'postvak', kind: 'core', label: 'Inbox', route: 'postvak', status: 'live' },
+  // ── custom (per tenant via custom_modules) ── status: live = gebouwd in de repo, gepland = nog te bouwen
+  { key: 'sales', kind: 'custom', label: 'Sales', route: 'sales', status: 'live' },
+  { key: 'website', kind: 'custom', label: 'Website', route: 'website', status: 'live' },
+  { key: 'social', kind: 'custom', label: 'Social media', route: 'social', status: 'gepland' },
+  { key: 'contracts', kind: 'custom', label: 'Contracten', route: 'contracten', status: 'live' },
+  { key: 'club', kind: 'custom', label: 'Club Kyano', route: 'club', status: 'gepland' },
+  { key: 'events', kind: 'custom', label: 'Events', route: 'events', status: 'gepland' },
 ]
 
 export const MODULE_BY_KEY = Object.fromEntries(MODULES.map((m) => [m.key, m]))

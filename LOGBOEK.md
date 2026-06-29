@@ -4,6 +4,77 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 22: Kyano-beheer /beheer — deel 2 (klant-detailpagina + tenant-toggles) (2026-06-29)
+
+### Aanleiding
+Deel 2: de klant-detailpagina met de vier beheer-panelen, en — de kern — de
+module-/agent-toggles aan de **echte tenant-config** hangen i.p.v. lokale flags.
+Bron live uit de Claude Design MCP (a948021d, `dashboard/kyanobeheer.jsx`).
+
+### Bron (geciteerd) — KbClientPage
+`KbClientPage` (in `kyanobeheer.jsx`): terug-knop → `cf-hero/kb-hero` (avatar +
+pakket/status-badge + naam + meta) → `page-body pw-grid` met vier `<Panel>`s:
+**Modules** ("Wat dit dashboard mag", per-module `tm-modrow` + `tm-toggle`),
+**Gegevens** ("kb-meta-band" met contact/e-mail/telefoon/pakket/status), **Agents**
+(8 agents met toggle), **Koppelingen** ("kb-krow" per tool met Beheren/Koppelen/
+Aanvragen + `KbKoppelModal` 3-staps). Plus `KbNewModal`.
+
+### Gebouwd
+- **`src/design/kyanobeheer.jsx`** — herschreven: prop-driven op de tenant-config.
+  `KyanoBeheer({ tenants, onPatch, onAdd, onRemove, onOpenDashboard })` toont de
+  lijst óf `KbClientPage`. De vier panelen in Team-stijl (`tm-modrow/tm-toggle/
+  tm-rolepick/tm-capseg/Panel`, layout inline). `KbKoppelModal` + `KbNewModal`.
+- **`src/tenant/TenantProvider.jsx`** — `tenants` is nu bewerkbare, gepersisteerde
+  state (localStorage `kyano:tenants.v1`); nieuw: `updateTenant/addTenant/
+  removeTenant`. De gate (`checkModuleAccess` → `activeTenant.custom_modules`)
+  leest dezelfde bron → een toggle is meteen de gate.
+- **`src/tenant/modules.js`** — `status: 'live' | 'gepland'` per module, zodat het
+  Modules-paneel "Beschikbaar" (live) en "Nog te bouwen" (gepland) apart toont.
+- **`src/pages/BeheerPage.jsx`** — bedraadt `useTenant()` (tenants + mutators) aan
+  `KyanoBeheer`; "Bekijk in dashboard" = `switchTenant(id)` + naar `/`.
+
+### De toggles aan de tenant-laag (het stuk dat bij /settings nog aan flags hing)
+- Module-toggle → `onPatch(id, { custom_modules, module_settings })` = `updateTenant`.
+- Agent-toggle → `onPatch(id, { active_agents })`; iris vergrendeld.
+- Gegevens/MRR/pakket/status → `onPatch(id, { display_name, …, metadata.mrr })`.
+- Tool-status → `onPatch(id, { metadata.tools })`.
+- **Geverifieerd (headless):** Sales uitzetten voor Sloepenspel →
+  `custom_modules` wordt `["website","social","contracts","club","events"]` +
+  `module_settings.sales.enabled=false` (gepersisteerd). "Bekijk in dashboard"
+  (switch naar die klant) → **Sales (en de sales-gated Pipeline/Relatiebeheer/
+  Leadfinder) zijn weg uit de sidebar**. De toggle is dus de echte onboarding-knop.
+
+### Poorten
+- `npm run build`: GROEN (1912 modules). `npm run lint`: 0 errors (3 pre-existing
+  warnings). `npm run test:knoppen /beheer` (live `:5174`, vers profiel): **GROEN —
+  46 knoppen, geen dode klikken.**
+
+### Trouw-rapport — Kyano-beheer deel 2. **Score: 8/10.**
+- Bron: `KbClientPage` + `KbKoppelModal`/`KbNewModal` uit `dashboard/kyanobeheer.jsx`.
+  De vier panelen, hun volgorde, de toggle-rijen, de koppel-3-staps en de
+  nieuwe-klant-flow zijn 1:1 in gedrag.
+- Afwijkingen (eerlijk): (1) Modules-paneel toggelt de **tenant `custom_modules`**
+  (modules.js, de echte gate) i.p.v. de fijnmazige demo-`c.mods` van de bron —
+  bewust, want dit is het echte onboarding-stuk; daardoor split live/gepland.
+  (2) De detail-layout is met inline-stijlen + `tm-*`/`Panel` i.p.v. de bron-
+  `kb-*`/`cf-*`-klassen (botsing met de kanban-`kb-*`); zelfde Team-look.
+  (3) De WidgetsProvider-"Indeling"-bewerkmodus van de bron is weggelaten (niet
+  nodig voor beheer). (4) IST/SOLL/Bouwplan-panelen = deel 3.
+
+### Klikpad — /beheer (deel 2)
+- `/beheer` (Kyano) → klik **Open** op Sloepenspel → detailpagina: hero +
+  4 panelen.
+- **Modules**: kern-note; "Beschikbaar" (Sales/Website/Contracten) + "Nog te
+  bouwen" (Social/Club/Events, label). Zet **Sales** uit → toast.
+- **Gegevens**: "Bewerk" → velden + pakket/status → "Opslaan".
+- **Agents**: 8 agents, Iris "altijd aan" (vergrendeld), rest togglebaar.
+- **Koppelingen**: Mollie (Gekoppeld → Ontkoppelen), Google Agenda (Klaar →
+  Koppelen → 3-staps modal → Activeren), WhatsApp (Nog te bouwen → Aanvragen).
+- **Bekijk in dashboard** → schakelt naar Sloepenspel; Sales is daar nu weg.
+- Terug → **Nieuwe klant** → modal → nieuwe tenant verschijnt in de lijst.
+
+---
+
 ## Stap 21: Kyano-beheer-dashboard /beheer — deel 1 (de kapstok) (2026-06-29)
 
 ### Aanleiding
