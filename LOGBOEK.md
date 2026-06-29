@@ -4,6 +4,84 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 23: Kyano-beheer /beheer — deel 3 (IST/SOLL/Bouwplan op demo-data) (2026-06-29)
+
+### Aanleiding
+De brain-panelen op de klant-detailpagina: IST, SOLL en Bouwplan — op DEMO-data
+in de **echte** brain-vorm. De live Supabase-koppeling is deel 4.
+
+### Bron + eerlijkheid
+De Design-`KbClientPage` (a948021d · `dashboard/kyanobeheer.jsx`) heeft **geen**
+IST/SOLL/Bouwplan-panelen — alleen Modules/Gegevens/Agents/Koppelingen. Dus de
+paneel-**stijl** komt uit het Design (`<Panel>` + `tm-modrow`-rijen, deel 2), de
+**datavorm** uit horaizon-brain (`metadata.soll`, `hypothesized_flows`/
+`flow_details`/`validated_flows`, `metadata.build_plan` — uit de eerdere diagnose,
+versie met `iris-generate-soll`/`iris-build-plan`/`myhoraizonManifest`). De
+panelen draaien op DEMO-data; niets is live opgehaald.
+
+### Gebouwd
+- **`src/design/discovery-demo.js`** (NIEUW) — realistische demo-Discovery voor
+  Sloepenspel in exact de brain-vorm: `hypothesized_flows[]{name,category_nl,
+  steps[]}`, `validated_flows[]`, `flow_details.flow_i.step_pills{owner,
+  sample_answer,opportunity}` (IST); `metadata.soll{flows[]{name,verhaal,steps},
+  flow_details…step_pills{soll_change,wat_kyano_bouwt,winst_indicatie,
+  build_mapping{module_key,agent_key,kind,module_label,agent_naam}},macro,status}`
+  (SOLL); `metadata.build_plan{provisioning,maatwerk[],bespoke[],summary}`.
+  **SEAM:** `getDiscovery(tenantId)` — deel 4 vervangt dit door één Supabase-query
+  op `discovery_sessions.metadata` (de query staat als comment in het bestand);
+  de panelen lezen exact dezelfde velden, dus de UI verandert niet.
+- **`src/design/kyanobeheer.jsx`** — drie panelen toegevoegd aan `KbClientPage`,
+  in dezelfde Panel/Team-stijl:
+  - **IST** (`IstPanel`): per flow naam + `category_nl` + bevestigd-badge
+    (uit `validated_flows`); per stap owner · tool + opportunity-vlag.
+  - **SOLL** (`SollPanel`): macro + per stap change-badge (Blijft/Automatisch/
+    Vervalt/Nieuw); bij automatisch/nieuw `wat_kyano_bouwt` + `winst_indicatie`
+    + de gemapte agent; status-badge (Concept/Gefinaliseerd).
+  - **Bouwplan** (`BouwplanPanel`): provisioning (custom_modules + agents +
+    status + summary) + maatwerk-backlog (module + bouwopdracht-titel) + de knop
+    **"Zet klant klaar"**.
+- **Keten gesloten** (`KbProvisionModal` + `applyProvisioning`): "Zet klant klaar"
+  toont de provisioning ter bevestiging; bij akkoord zet het de aanbevolen
+  modules/agents **echt aan** voor die klant via `updateTenant` (deel 2) — union,
+  dus het zet aan, haalt niets weg.
+
+### Poorten
+- `npm run build`: GROEN (1913 modules). `npm run lint`: 0 errors (3 pre-existing
+  warnings). `npm run test:knoppen /beheer` (live `:5174`): **GROEN — 46 knoppen,
+  geen dode klikken.**
+- **Headless geverifieerd:** 7 panelen renderen (incl. IST/SOLL/Bouwplan); de
+  IST-opportunity- en SOLL-change-badges zijn zichtbaar (terugkerend handwerk,
+  wachttijd, Blijft/Automatisch/Vervalt/Nieuw, Bevestigd/Niet bevestigd). Sales
+  uitzetten → `custom_modules` verliest sales → **Zet klant klaar** → modal toont
+  Sales/Website/Contracten → akkoord → `custom_modules` bevat sales weer → bij de
+  klant staan **Sales, Website én Contracten** in de sidebar.
+
+### Trouw-rapport — Kyano-beheer deel 3. **Score: 8/10.**
+- Datavorm 1:1 met de brain (alle velden uit de diagnose); paneel-stijl 1:1 met
+  het Design/deel-2 (`Panel` + `tm-modrow` + `kyb-badge`). **Expliciet: demo-data
+  in de echte vorm**, geen live query.
+- Afwijkingen (eerlijk): (1) het Design heeft deze drie panelen niet — ze zijn
+  nieuw, gebouwd in de bestaande stijl. (2) In de demo houd ik `vervalt`-stappen
+  in `soll.flows[].steps` zodat de change-mix zichtbaar is; de echte
+  `iris-generate-soll` laat ze uit `steps[]` (blijven in `step_pills`). (3) "Zet
+  klant klaar" doet een **union** (aanzetten, niets weghalen) i.p.v. een
+  destructieve replace, zodat het bij een enterprise-klant niets verliest.
+
+### Klikpad — /beheer (deel 3)
+- `/beheer` (Kyano) → **Open** Sloepenspel → onder de 4 beheer-panelen nu
+  **Discovery · onboarding**: IST, SOLL, Bouwplan.
+- **IST**: 3 processen (Aanvraag & offerte ✓ bevestigd, Boeking & planning ✓,
+  Facturatie · niet bevestigd); per stap owner + tool + "terugkerend handwerk"/
+  "wachttijd" waar van toepassing.
+- **SOLL**: change-badges (offerte opstellen → Automatisch met "wordt automatisch
+  opgesteld · enkele uren per week"; overtypen → Vervalt; nabellen → Blijft;
+  herinnering → Nieuw); status **Concept**.
+- **Bouwplan**: provisioning (Sales/Website/Contracten · iris/hugo/sam/juris/daan ·
+  trial) + maatwerk (Events · Kai). Knop **Zet klant klaar** → modal → "Modules
+  aanzetten" → toast; **Bekijk in dashboard** → de aanbevolen modules staan aan.
+
+---
+
 ## Stap 22: Kyano-beheer /beheer — deel 2 (klant-detailpagina + tenant-toggles) (2026-06-29)
 
 ### Aanleiding
