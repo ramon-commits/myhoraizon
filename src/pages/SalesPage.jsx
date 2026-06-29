@@ -7,7 +7,6 @@
    (tenant 1 aan, tenant 2 403); de gate is de echte poort. */
 import { useOutletContext } from 'react-router-dom'
 import { ICONS } from '../design/icons'
-import { AC, ACsoft, KyanoMark } from '../design/components.jsx'
 import { TileGrid } from '../design/tiles.jsx'
 import { useModuleSettings } from '../tenant/TenantProvider'
 import ModuleOff from '../tenant/ModuleOff'
@@ -20,9 +19,7 @@ export default function SalesPage() {
   return (
     <div className="dash sales-board">
       <header className="sx-hero">
-        <div className="sx-hero-logo" style={{ '--acc': AC('red'), '--acc-soft': ACsoft('red') }}>
-          <span className="sx-hero-mark"><KyanoMark size={26} color={AC('red')} /></span>
-        </div>
+        <img className="sales-hero-logo" src="/brand/sales-mark.svg" alt="Sales" />
         <div className="sx-hero-id">
           <h1 className="sx-hero-h1">Sales</h1>
           <p className="sx-hero-sub mono">Je sales-overzicht, pipeline, klanten en omzet, aangestuurd door Hugo en Iris</p>

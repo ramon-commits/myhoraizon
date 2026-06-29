@@ -66,7 +66,11 @@ export function Sidebar({ view, go, flags, email, onLogout }) {
     return (
       <button key={id} className={'sb-item' + (opts.primary ? ' primary' : '') + (view === id ? ' on' : '')} onClick={() => go(id)}>
         <span className="sb-ic" style={view === id ? null : { color: opts.primary ? AC('aqua') : AC(m.accent) }}>
-          <span dangerouslySetInnerHTML={{ __html: ICONS(m.icon) }} />
+          {id === 'sales'
+            ? <img className="sb-ic-logo" src="/brand/sales-mark.svg" alt="Sales" width={24} height={24} />
+            : id === 'website'
+              ? <img className="sb-ic-logo" src="/brand/website-mark.svg" alt="Website" width={24} height={24} />
+              : <span dangerouslySetInnerHTML={{ __html: ICONS(m.icon) }} />}
         </span>
         <span className="sb-lbl">{m.name}</span>
         {n > 0 && <span className="sb-badge" style={view === id ? null : { color: AC(m.accent), background: ACsoft(m.accent) }}>{n}</span>}
@@ -92,7 +96,7 @@ export function Sidebar({ view, go, flags, email, onLogout }) {
 
         <div className="sb-primary">
           <button className={'sb-item iris-nav primary' + (view === 'iris' ? ' on' : '')} onClick={() => go('iris')}>
-            <span className="sb-ic iris-ic"><img className="sb-ic-logo" src="/brand/horaizon-teal-1e7f75.svg" alt="Iris" width={24} height={24} /></span>
+            <span className="sb-ic iris-ic"><img className="sb-ic-logo" src="/brand/iris-mark.svg" alt="Iris" width={24} height={24} /></span>
             <span className="sb-lbl">Iris</span>
             {irisN > 0 && <span className="iris-badge">{irisN}</span>}
           </button>

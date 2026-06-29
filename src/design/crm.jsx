@@ -149,6 +149,34 @@ function NewClientFlow({ store, onClose, onOpenCust }) {
 }
 
 /* ============================================================
+   NL-kaart met klant-pins (uit de blauwdruk, salescrm.jsx · NLMap). De
+   pin-positie komt uit de x/y-haakjes per klant in customers.js — niet in
+   de kaart hardcoded; vervang die door echte lat/lng en de pins verschuiven mee.
+   ============================================================ */
+function NLMap({ custs }) {
+  return (
+    <div className="crm-map">
+      <div className="crm-map-inner">
+        <svg viewBox="0 0 100 130" className="crm-map-svg" preserveAspectRatio="none">
+          <path className="crm-map-land" d="M44 8 L52 6 L58 12 L56 20 L62 22 L66 18 L70 24 L64 32 L70 40 L66 50 L72 58 L68 70 L60 80 L64 92 L56 104 L60 116 L48 124 L40 118 L44 108 L36 100 L40 88 L32 80 L38 68 L30 60 L36 50 L30 40 L38 32 L32 24 L40 20 L38 12 Z" />
+        </svg>
+        {custs.map((c) => {
+          const a = (STATUS_META[c.status] || STATUS_META.prospect).accent
+          return (
+            <button key={c.id} className="crm-pin" style={{ left: c.x + '%', top: (c.y / 1.3) + '%', '--pc': AC(a) }} title={c.name + ' · ' + c.city} onClick={() => openKlantCard(c.id, 'de NL-kaart')}>
+              <span className="crm-pin-dot" />
+            </button>
+          )
+        })}
+      </div>
+      <div className="crm-map-legend">
+        {Object.entries(STATUS_META).map(([k, m]) => <span key={k} className="crm-leg"><span className="crm-leg-dot" style={{ background: AC(m.accent) }} />{m.label}</span>)}
+      </div>
+    </div>
+  )
+}
+
+/* ============================================================
    CRM-pagina, bord + instelbare tabel. edit/layout/markt via Outlet-context
    (AppShell), zoals /sales en /pipeline.
    ============================================================ */
@@ -234,6 +262,10 @@ export function CrmPage({ edit, layout, setLayout, openLib, go, flags, board }) 
         </div>
       </div>
       <FilterChips rules={rules} setRules={setRules} />
+
+      <Panel eyebrow="Op de kaart" title="Klanten in Nederland" accent="red">
+        <NLMap custs={custs} />
+      </Panel>
 
       <Panel wid="Klanten" eyebrow={list.length + " klant" + (list.length === 1 ? "" : "en") + " · " + counts.att + " vragen aandacht · " + eur(recurring) + "/mnd terugkerend · " + eur(atRisk) + " at-risk"} title="Alle relaties" accent="red" pad={false}>
         <div className="crm-table cust">

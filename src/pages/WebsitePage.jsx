@@ -6,7 +6,7 @@
    ModuleGate (tenant-config bepaalt aan/uit). */
 import { useOutletContext } from 'react-router-dom'
 import { ICONS } from '../design/icons'
-import { AC, ACsoft, KyanoMark, Btn } from '../design/components.jsx'
+import { Btn } from '../design/components.jsx'
 import { TileGrid } from '../design/tiles.jsx'
 import { notImplemented } from '../design/store.jsx'
 import { useModuleSettings } from '../tenant/TenantProvider'
@@ -20,9 +20,7 @@ export default function WebsitePage() {
   return (
     <div className="dash website-board">
       <header className="sx-hero">
-        <div className="sx-hero-logo" style={{ '--acc': AC('gold'), '--acc-soft': ACsoft('gold') }}>
-          <span className="sx-hero-mark"><KyanoMark size={26} color={AC('gold')} /></span>
-        </div>
+        <img className="sales-hero-logo" src="/brand/website-mark.svg" alt="Website" />
         <div className="sx-hero-id">
           <h1 className="sx-hero-h1">Website</h1>
           <p className="sx-hero-sub mono">

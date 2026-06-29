@@ -4,6 +4,87 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 17: Huisstijl-polish — merk-iconen, lettertypes, NL-kaart terug (2026-06-29)
+
+### Aanleiding
+Afwerking, geen nieuwe features. Drie dingen recht zetten, alles **live uit de
+Claude Design MCP** (project `a948021d-…`) gehaald en geciteerd, niets verzonnen.
+
+### DEEL 1 — Merk-iconen (ronde merk-icoon op de juiste plekken)
+Bron-blauwdruk `dashboard/shell.jsx`: de sidebar én de board-hero gebruiken de
+ronde merk-SVG's via `ASSET(id, "dashboard/<x>-mark.svg")` — niet de functionele
+lijn-iconen en niet de rode `KyanoMark`. De echte mark-SVG's uit het Design
+(`dashboard/{iris,sales,website}-mark.svg`) zijn gevulde cirkels in de juiste
+merk-kleur + wit ring+balk:
+- `iris-mark.svg` → **`#4FB8B2`** (aqua/groen — precies de "groen" uit het Design)
+- `sales-mark.svg` → **`#D85F4A`** (koraal)
+- `website-mark.svg` → **`#E0B341`** (mosterd)
+
+Doorgevoerd:
+- **Asset-inclusie** (fix "ESM-build viel terug op repo-iconen, svg ontbrak):
+  de drie mark-SVG's verbatim toegevoegd in `public/brand/` (`iris-mark.svg`,
+  `sales-mark.svg`, `website-mark.svg`). `public/` belandt gegarandeerd in `dist/`
+  → geen import-resolutie, geen fallback. Geverifieerd: alle drie serveren `200`
+  op `:5174` en de build-JS verwijst naar `/brand/{iris,sales,website}-mark.svg`.
+- **Sidebar** (`src/design/shell.jsx`, NavBtn — 1:1 met de blauwdruk):
+  Sales → `/brand/sales-mark.svg`, Website → `/brand/website-mark.svg`
+  (`<img className="sb-ic-logo">`). Iris-knop: bron van `horaizon-teal-1e7f75.svg`
+  (`#1E7F75`, donker) → `iris-mark.svg` (`#4FB8B2`, de juiste groen).
+- **Board-hero** (`src/pages/SalesPage.jsx`, `src/pages/WebsitePage.jsx`):
+  de rode/gouden `KyanoMark` vervangen door `<img className="sales-hero-logo"
+  src="/brand/{sales,website}-mark.svg">` — exact zoals `shell.jsx` per board doet.
+  Ongebruikte imports (`AC`/`ACsoft`/`KyanoMark`) opgeruimd.
+- **Bewust ongemoeid:** functionele iconen van losse menu-items (Vandaag=huis,
+  Inbox=envelop, Agenda, Team, Pipeline, Relatiebeheer, Leadfinder, CRM=people),
+  de CRM-hero (people-icoon, conform de bron), de Iris-board-hero (`Avatar
+  agent="iris"`, iris-accent), en `sales.jsx · SalesDash` (legacy, niet-gerouteerd).
+
+### DEEL 2 — Lettertypes
+Bron-blauwdruk `index.html` (Design) laadt exact:
+`Bricolage Grotesque:opsz,wght@12..96,500..800` (display/koppen),
+`Instrument Serif:ital@0;1` (cursieve serif, o.a. de hero-naam),
+`Geist:wght@400..700` (body), `Geist Mono:wght@400..600` (mono eyebrows).
+De app paste die families al toe (`blueprint.css`/`src/index.css`: body=Geist,
+`.mono`=Geist Mono, koppen=Bricolage, `.greet-h1 em`/`.sb-word .ai`=Instrument
+Serif italic). De Google-Fonts-link in `index.html` is nu byte-voor-byte gelijk
+aan de Design-definitie gemaakt (opsz `12..96`, Geist Mono incl. `400`), zodat de
+hero-serif-naam en de mono-eyebrows exact de Design-typografie volgen.
+
+### DEEL 3 — NL-kaart op /crm
+De `NLMap` uit `salescrm.jsx` (gevulde NL-omtrek-`path` + `crm-map`/`crm-pin`/
+`crm-leg`-classes + status-legenda; CSS stond al in `blueprint.css`) was eerder uit
+de port gevallen ("NL-kaart weg van /crm", Stap 16). Teruggezet in
+`src/design/crm.jsx` als bord-widget-kaart (`<Panel eyebrow="Op de kaart"
+title="Klanten in Nederland">`) boven de relatietabel. Pin-positie komt uit de
+**x/y-haakjes per klant in `customers.js`** (`left:c.x%`, `top:(c.y/1.3)%`) — net
+als de bron, niet in de kaart hardcoded; vervang die haakjes door echte lat/lng
+en de pins schuiven mee. Pins openen de gedeelde klantkaart (`openKlantCard`).
+
+### Trouw-rapport — wat uit het Design kwam
+- **Merk-assets** (geciteerd, `get_file` uit project `a948021d-…`):
+  `dashboard/iris-mark.svg` `fill="#4FB8B2"`, `dashboard/sales-mark.svg`
+  `fill="#D85F4A"`, `dashboard/website-mark.svg` `fill="#E0B341"` — alle met
+  `viewBox="0 0 100 100"`, witte `circle r=22 sw=9` + `rect y=60 h=9`.
+  Plaatsing 1:1 uit `dashboard/shell.jsx` (sidebar `sb-ic-logo`, hero
+  `sales-hero-logo`).
+- **Fonts** (geciteerd uit Design `index.html`): Bricolage Grotesque, Instrument
+  Serif, Geist, Geist Mono — link nu identiek.
+- **NL-kaart** (geciteerd uit `salescrm.jsx · NLMap`): land-`path`, classes en
+  legenda verbatim; positie uit de data-haakjes, niet hardcoded.
+- **Bevestiging:** nergens nog een fallback-icoon of de rode `KyanoMark` op een
+  merk-plek; geen verkeerd font.
+
+### Poorten
+- `npm run build`: GROEN (1908 modules). `dist/brand/{iris,sales,website}-mark.svg`
+  aanwezig; build-JS verwijst naar de mark-paden + bevat de `crm-map-land`-path.
+- `npm run lint`: 0 errors (3 pre-existing warnings).
+- `npm run test:knoppen` (live dev-server `:5174`): GROEN — default 74 knoppen
+  over 4 routes; `/sales /website /crm /iris` 92 knoppen, geen dode klikken.
+  (Let op: een *stale* :5174-server uit een vorige sessie geeft vals-laag ~3
+  knoppen; vers herstart geeft het echte beeld.)
+
+---
+
 ## Stap 16: De volledige CRM uit Claude Design (2026-06-29)
 
 ### Aanleiding
