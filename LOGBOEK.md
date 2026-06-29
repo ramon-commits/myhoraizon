@@ -4,6 +4,42 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 24: Verzonnen deel-3-panelen teruggedraaid (Design = bron) (2026-06-30)
+
+### Aanleiding
+Feedback: de IST/SOLL/Bouwplan-panelen op de klant-detailpagina waren **zelf
+verzonnen** — ze staan NIET in het Design. Regel scherpgezet: niet zelf bedenken;
+staat een widget nog niet in het Design, dan eerst een Claude Design-prompt om
+hem dáár te maken (in dezelfde widget-vorm), en pas daarna 1:1 porten.
+
+### Geverifieerd tegen het Design (live, MCP)
+`dashboard/kyanobeheer.jsx · KbClientPage` heeft exact **vier** panelen:
+Modules · Gegevens · Agents · Koppelingen. Geen IST/SOLL/Bouwplan. De detail-CSS
+(`kb-page/kb-hero/kb-meta-band/kb-mrows/kb-krow/…`) staat niet in de repo en is
+niet via de MCP op te halen (alleen ge-inlined in de op 256 KB afgekapte
+standalone-HTML).
+
+### Teruggedraaid
+- `src/design/discovery-demo.js` verwijderd.
+- `src/design/kyanobeheer.jsx` terug naar de deel-2-versie (de vier
+  design-getrouwe panelen + tenant-toggles). De verzonnen IstPanel/SollPanel/
+  BouwplanPanel/KbProvisionModal + `getDiscovery`-haak zijn weg.
+- `src/tenant/modules.js` (status live|gepland) en `TenantProvider`
+  (updateTenant + persistente tenants) blijven — die zijn deel 2 en design-neutraal.
+
+### Vervolg
+De IST/SOLL/Bouwplan-widgets worden eerst in het Design getekend (Claude
+Design-prompt aan Ramon geleverd: drie `<Panel wid>`-widgets in `KbClientPage`,
+zelfde vorm als de andere panelen, gevoed door de brain-velden metadata.soll /
+hypothesized_flows / metadata.build_plan). Daarna port ik ze 1:1 (incl. CSS).
+
+### Poorten
+- `npm run build`: GROEN. `npm run lint`: 0 errors (3 pre-existing warnings).
+  `npm run test:knoppen /beheer` (live `:5174`): **GROEN — 46 knoppen, geen dode
+  klikken.**
+
+---
+
 ## Stap 23: Kyano-beheer /beheer — deel 3 (IST/SOLL/Bouwplan op demo-data) (2026-06-29)
 
 ### Aanleiding
