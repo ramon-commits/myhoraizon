@@ -121,6 +121,13 @@ export default function AppShell() {
   const vaReadonly = !!(viewAs && viewAs.mem && viewAs.mem.cap === 'view')
   const vaRole = viewAs ? (window.TEAM_ROLES && window.TEAM_ROLES[viewAs.mem.role]) : null
 
+  // tijdens view-as: sta je via een directe URL op een module die het lid niet
+  // mag (effFlags[view] === false), dan terug naar het dashboard — 1:1 uit de
+  // Design-shell (if (MOD[view] && effFlags[view] === false) go("dashboard")).
+  useEffect(() => {
+    if (viewAs && view && effFlags[view] === false) navigate('/')
+  }, [viewAs, view, effFlags, navigate])
+
   return (
     <div className={'app' + (viewAs ? ' viewas' : '') + (vaReadonly ? ' viewas-ro' : '')} style={{ zoom: 0.9 }}>
       <Sidebar view={view} go={go} flags={effFlags} email={email} onLogout={onLogout} />
@@ -140,7 +147,7 @@ export default function AppShell() {
             tenantSwitcher={<TenantSwitcher />}
           />
           <ModuleGate>
-            <Outlet context={{ edit, layout, setLayout, openLib, go, flags, board }} />
+            <Outlet context={{ edit, layout, setLayout, openLib, go, flags: effFlags, board }} />
           </ModuleGate>
         </div>
       </div>

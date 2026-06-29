@@ -4,6 +4,71 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 19: View-as inhoudelijk afgemaakt — boards filteren op het teamlid (2026-06-29)
+
+### Aanleiding
+Diagnose (Stap 18-na): view-as filterde alleen de sidebar; de boards kregen de
+tenant-`flags` i.p.v. `effFlags`, dus dashboard/Vandaag toonden nog álle widgets
+van de eigenaar. Klein, gericht dichten — exact zoals het Design.
+
+### Bron (geciteerd, `dashboard/shell.jsx`)
+```js
+const memberFlags = viewAs ? flagsForView(viewAs.allowed) : null;
+const effFlags = viewAs ? (viewAsAll ? flags : (memberFlags || flags)) : flags;
+```
+en op élk board: `<TileGrid … flags={effFlags} … />`, plus de redirect
+`useEffect(() => { if (MOD[view] && effFlags[view] === false) go("dashboard"); }, [effFlags, view, go]);`
+
+### Gebouwd (2 regels netto, `src/components/AppShell.jsx`)
+1. **Outlet geeft nu `effFlags` door** i.p.v. de tenant-`flags`:
+   `<Outlet context={{ … go, flags: effFlags, board }} />`. `DashboardPage`/
+   `VandaagPage` reiken dat ongewijzigd aan hun `TileGrid`, die tiles met
+   `flags[id] === false` al dropt (`tiles.jsx:802`). Buiten view-as geldt
+   `effFlags === flags`, dus normaal gedrag verandert niet.
+2. **effFlags-redirect** (alleen tijdens view-as): staat het lid via een directe
+   URL op een verborgen module (`effFlags[view] === false`), dan terug naar `/`.
+
+Met rust gelaten (werkte al, niet herbouwd): toegewezen-taak-scoping via
+`window.__viewAs`/`currentActor`, de sidebar-filter, en de read-only-modus
+(`app viewas-ro`). Bewust gelijk aan het Design: géén member-greeting en géén
+member-voorstellen — de globale agent-voorstellen en de begroeting (eigenaar-naam)
+blijven gelijk; het Design swapt geen per-member dataset, het filtert zichtbaarheid
++ toegewezen taken.
+
+### Trouw-rapport — view-as inhoud. **Score: 10/10.**
+- `effFlags`-berekening en doorgifte aan de boards zijn 1:1 met `shell.jsx`
+  (zie citaat). Redirect identiek. Geen extra's verzonnen.
+- **Headless geverifieerd** (view-as op Lisa de bekijker, mods
+  analytics/omzet/website/seo):
+  - Eigenaar-dashboard: 29 tiles. View-as Lisa-dashboard: **11 tiles** met de
+    `.vab`-banner zichtbaar — exact de `flagsForView`-set (allowed + kern +
+    people/agents). **18 module-widgets verborgen** (sales, crm, facturen, finder,
+    offertes, contracten, pipeline, relatiebeheer, studio, paginas, editor,
+    domein, aanvragen, social, exact, mollie, google, club).
+  - Directe URL `/crm` tijdens view-as → **redirect naar `/`**.
+  - Vandaag krijgt nu óók `effFlags`; z'n pool is kern/Iris-widgets (voorstel,
+    kpis, agenda, postvak, irisbrief, irisattn, snelacties, irisflags) die niet
+    module-gated zijn, dus die blijven staan — net als in het Design.
+- Eerlijke nuance: op Vandaag is er geen zichtbare daling (geen module-widgets in
+  de pool); het effect is zichtbaar op het dashboard.
+
+### Poorten
+- `npm run build`: GROEN (1910 modules). `npm run lint`: 0 errors (3 pre-existing
+  warnings). `npm run test:knoppen /people / /vandaag` (live `:5174`): **GROEN —
+  80 knoppen, geen dode klikken.**
+
+### Klikpad — view-as op Lisa (bekijker)
+- `/people` → kaart "Lisa Vermeer" (Bekijker) → knop **"Bekijk"**.
+- Dashboard opent met de **ViewAsBanner** bovenin ("Je bekijkt de werkruimte van
+  Lisa Vermeer · Bekijker · alleen-lezen"). Het bord toont nu alleen omzet,
+  analytics, website, seo (+ kern/Iris-widgets); sales/crm/finder/offertes/…
+  zijn weg — niet alleen de sidebar.
+- Klik **Vandaag** → kern/Iris-widgets (faithful, geen module-widgets te
+  verbergen). Directe URL naar `/crm` → terug naar dashboard.
+- **"Stop meekijken"** → terug naar `/people`, alles weer volledig.
+
+---
+
 ## Stap 18: Team-module (/people) volledig uit het Design + view-as-laag (2026-06-29)
 
 ### Aanleiding
