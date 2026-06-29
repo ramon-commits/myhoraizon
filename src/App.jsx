@@ -34,6 +34,7 @@ import RelatiebeheerPage from './pages/RelatiebeheerPage'
 import SettingsPage from './pages/SettingsPage'
 import CrmPage from './pages/CrmPage'
 import TeamPage from './pages/TeamPage'
+import BeheerPage from './pages/BeheerPage'
 import DashboardPage from './pages/DashboardPage'
 import QuotesListPage from './pages/QuotesListPage'
 import QuoteDetailPage from './pages/QuoteDetailPage'
@@ -82,6 +83,7 @@ export default function App() {
               <Route path="settings" element={<SettingsPage />} />
               <Route path="crm" element={<CrmPage />} />
               <Route path="people" element={<TeamPage />} />
+              <Route path="beheer" element={<BeheerPage />} />
               <Route path="offertes" element={<QuotesListPage />} />
               <Route path="offertes/:id" element={<QuoteDetailPage />} />
               <Route path="contracten" element={<ContractsListPage />} />

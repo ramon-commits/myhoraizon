@@ -55,7 +55,7 @@ function LetterAv({ name, accent, size = 32 }) {
   )
 }
 
-export function Sidebar({ view, go, flags, email, onLogout }) {
+export function Sidebar({ view, go, flags, email, onLogout, kyano }) {
   const store = useStore()
   const irisN = (KYANO.tasks || []).filter((_, i) => store.get('task.status.' + i, 'pending') === 'pending').length
 
@@ -89,6 +89,14 @@ export function Sidebar({ view, go, flags, email, onLogout }) {
       </div>
 
       <div className="sb-scroll">
+        {kyano && (
+          <button className={'sb-item' + (view === 'beheer' ? ' on' : '')} onClick={() => go('beheer')}>
+            <span className="sb-ic" style={view === 'beheer' ? null : { color: AC('navy') }}>
+              <span dangerouslySetInnerHTML={{ __html: ICONS('shield') }} />
+            </span>
+            <span className="sb-lbl">Kyano-beheer</span>
+          </button>
+        )}
         <button className={'sb-item home' + (view === 'dashboard' ? ' on' : '')} onClick={() => go('dashboard')}>
           <span className="sb-ic"><span dangerouslySetInnerHTML={{ __html: ICONS('grid') }} /></span>
           <span className="sb-lbl">Dashboard</span>

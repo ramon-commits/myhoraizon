@@ -130,7 +130,7 @@ export default function AppShell() {
 
   return (
     <div className={'app' + (viewAs ? ' viewas' : '') + (vaReadonly ? ' viewas-ro' : '')} style={{ zoom: 0.9 }}>
-      <Sidebar view={view} go={go} flags={effFlags} email={email} onLogout={onLogout} />
+      <Sidebar view={view} go={go} flags={effFlags} email={email} onLogout={onLogout} kyano={!activeTenant && !viewAs} />
       <div className="main">
         {viewAs && <ViewAsBanner va={viewAs} all={viewAsAll} setAll={setViewAsAll} role={vaRole} readonly={vaReadonly} />}
         <div className="main-scroll">

@@ -4,6 +4,77 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 21: Kyano-beheer-dashboard /beheer — deel 1 (de kapstok) (2026-06-29)
+
+### Aanleiding
+Het Kyano AI Studio · Beheer-scherm (Kyano beheert de klant-dashboards) bouwen,
+deel 1: de kapstok + klantenlijst. Bron live uit de Claude Design MCP
+(project a948021d, `dashboard/kyanobeheer.jsx`).
+
+### Bron (geciteerd) + afwijking
+`dashboard/kyanobeheer.jsx` (KYANO AI STUDIO · BEHEER) is **exact de Team-pagina-
+vorm**: `tm-head` (titel "Kyano AI Studio · Beheer" + shield-icoon + teller) →
+balk met `sx-search` + pakket-filter (`tm-roles`) → `tm-grid` met `KbClientCard`s
+(avatar, bedrijf, contact, pakket-badge, agents/modules, Live/Trial). De detail-
+pagina (`KbClientPage`: Modules/Gegevens/Agents/Koppelingen) en de modals
+(beheer/nieuw/koppel) zijn **deel 2**.
+**Afwijking (eerlijk):** het Design gebruikt NIET `sx-hero`+TileGrid maar de
+Team-vorm — ik volg het Design (= ook "in de stijl van de Team-pagina" uit de
+opdracht). De `kb-*`-klassen uit de bron heten hier `kyb-*` omdat `.kb-*` in deze
+repo al de kanban-board is.
+
+### Gebouwd
+- **`src/design/kyanobeheer.jsx`** (NIEUW) — `KyanoBeheer` (lijst) + `KbClientCard`,
+  geport op de Team-klassen (`tm-head/tm-roles/tm-grid/tm-card/tm-line/tm-btn`).
+  Per kaart: bedrijf, contact, pakket-badge, **MRR**, **Discovery-keten-badge**
+  (`KB_DISCOVERY`), modules-dots + Live/Trial, en knoppen Open/Beheer/×.
+- **Klant-seed uit `tenants.js`** (de 2 demo-tenants) + demo-velden
+  (`KB_DEMO`: discovery-status + MRR). `seedClients()` mapt `display_name`,
+  `primary_contact_name`, `package`, `status`, `active_agents`, `custom_modules`.
+- **`src/pages/BeheerPage.jsx`** (NIEUW) — route + Kyano-gate.
+- **`src/App.jsx`** — `import BeheerPage` + `<Route path="beheer">`.
+- **`src/design/shell.jsx`** — sidebar krijgt een Kyano-only item "Kyano-beheer"
+  (shield) via een nieuwe `kyano`-prop.
+- **`src/components/AppShell.jsx`** — geeft `kyano={!activeTenant && !viewAs}`
+  door aan de Sidebar.
+- **`src/design/blueprint.css`** — kleine `kyb-*`-set (bar/search/roles/badge/
+  empty) bovenop de bestaande `tm-*`/`sx-search`.
+
+### Gate (Kyano-only)
+In de repo-ruggengraat is de Kyano Superadmin = de **CEO-allesweergave**
+(`activeTenant === null`, zie `TenantProvider`). `/beheer` rendert alleen dan;
+staat er een klant-tenant actief (of view-as), dan toont de pagina een
+"Alleen voor Kyano"-notitie en verdwijnt het sidebar-item.
+
+### Knoppen (deel 1)
+Werkend: zoekveld, pakket-filter (`role="tab"`, actieve tab dode-klik-vrij),
+Verwijderen (confirm + remove uit de store). `notImplemented()` (geen dode klik,
+detail komt in deel 2): Open, Beheer, Nieuwe klant, "Klant-dashboard toevoegen".
+
+### Poorten
+- `npm run build`: GROEN (1912 modules). `npm run lint`: 0 errors (3 pre-existing
+  warnings). `npm run test:knoppen /beheer` (live `:5174`): **GROEN — 46 knoppen,
+  geen dode klikken.**
+
+### Trouw-rapport — Kyano-beheer deel 1. **Score: 8/10.**
+- Lijst, kop, zoek, pakket-filter en kaart-vorm zijn 1:1 de bron (Team-vorm).
+- Afwijkingen: (1) detail-pagina + modals bewust uitgesteld naar deel 2
+  (Open/Beheer/Nieuw → notImplemented); (2) klant-seed uit `tenants.js` i.p.v. de
+  bron-`KB_CLIENTS` (zoals gevraagd), met demo discovery/MRR; (3) `kyb-*` i.p.v.
+  `kb-*` (naamsbotsing met de kanban); (4) `MRR` + Discovery-keten-badge
+  toegevoegd aan de kaart op verzoek (de bron-kaart toont die niet).
+
+### Klikpad — /beheer
+- Open `/beheer` (CEO/Kyano-weergave) → kop "Kyano AI Studio · Beheer", 2 klant-
+  kaarten (Sloepenspel Amsterdam · Enterprise · Afgerond · € 1.850/mnd · Live;
+  Kapsalon Knip & Co · Starter · In gesprek · Trial), in Team-stijl.
+- Zoek "knip" → alleen Kapsalon; leeg → beide terug.
+- Pakket-filter "Enterprise" → alleen Sloepenspel; "Alle pakketten" → beide.
+- Verwijderen (×) → bevestig-dialoog → kaart weg. Open/Beheer/Nieuwe klant →
+  nette "komt binnenkort"-toast (deel 2).
+
+---
+
 ## Stap 20: Leadfinder + Relatiebeheer herzien naar het nieuwe Design (2026-06-29)
 
 ### Aanleiding

@@ -4846,6 +4846,15 @@ p.wys-ed{font-size:15px;color:var(--ink2);margin-top:10px;line-height:1.5}
 .kb-card:active{transform:scale(.992)}
 .kb-move button:active:not(:disabled){transform:scale(.92)}
 .crm-pin:active .crm-pin-dot{transform:scale(1.2)}
+/* Kyano-beheer (deel 1) — bovenop de Team-vorm (tm-*). Eigen kyb-namespace
+   omdat .kb-* in deze repo de kanban-board is. */
+.kyb-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:2px 0 16px}
+.kyb-search{flex:1;min-width:220px}
+.kyb-roles{flex:0 1 auto}
+.kyb-card-open{cursor:pointer}
+.kyb-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border-radius:99px;font-size:11px;font-weight:600;white-space:nowrap}
+.kyb-badge-dot{width:6px;height:6px;border-radius:99px;flex:0 0 auto}
+.kyb-empty{grid-column:1/-1;padding:28px;text-align:center;color:var(--ink3);font-size:13px}
 .crm-pin:focus-visible{outline:none}
 .crm-pin:focus-visible .crm-pin-dot{box-shadow:0 0 0 3px color-mix(in oklab,var(--pc) 26%,transparent),0 0 0 5px color-mix(in oklab,var(--pc) 45%,transparent),0 1px 3px rgba(0,0,0,.25)}
 .sx-act:active{transform:scale(.92);background:color-mix(in oklab,var(--ink3) 10%,var(--card))}
