@@ -4,6 +4,53 @@ Bouwlog per afgeronde stap. Nieuwste bovenaan.
 
 ---
 
+## Stap 26: Website-module gekoppeld aan de ECHTE backend-vorm via seam (2026-06-30)
+
+### Aanleiding
+De Website-board-UI (`WebsitePage` + `tiles.jsx` BOARDS.website) stond al 1:1 op
+het Design (`Klant-dashboard.html`, project a948021d), maar draaide volledig op
+design-demo. Doel: koppelen aan de werkende Website-backend. Geen stille demo.
+
+### Diagnose (bron geciteerd) — vóór bouw
+- **Echte backend** = `~/Desktop/horaizon-app-main` edge-functions: `seo-agent`
+  (action: write_page|optimize_page|batch_run), `keyword-api` (DataForSEO + Google
+  Search Console), `quick-site-scan` (ScanResult: totaal/snelheid/vindbaarheid/
+  content/mobiel/conversie/ai_gereedheid/vertrouwen/concurrentie), `conversie-agent`,
+  `semrush-api` (legacy). Tabellen: `paginas` (pagina_type/status/seo_score),
+  `content_mapping_matrix` (keyword/gsc_clicks/gsc_impressions/gsc_ctr/
+  keyword_difficulty_personal/bron), `seo_keyword_tracking` (keyword/positie/bron),
+  `pagina_secties`, `content_changes`, `agent_runs`, `analytics_snapshots`.
+- **Blokkade**: die functions draaien op Stan's project `dofmjstoeqpezukgqtyq`
+  (schema organizations/projects), myhoraizon op het brein `ajcckxxlkvdnpwdfvmvk`
+  (schema tenants). Brein-JWT wordt door Stan's project niet geaccepteerd; RLS
+  filtert op organization_members → cross-project lezen vanuit de browser kan niet.
+  Live gaan = Masterplan-blok **F2.7-B4** (functions + tabellen porten naar brein).
+- De sloepenspel-repo (`Sloepenspel Kyano Ai/05-build`) is een Next.js GitHub-CMS
+  van de publieke site zélf — niet de agent-databron. Genoteerd, niet gebruikt.
+
+### Gebouwd (alleen Website-module)
+- **`src/lib/website.js`** — databron-seam. `fetchWebsiteSnapshot({tenant})` probeert
+  de geporte brein-tabellen (`website_paginas`/`website_keywords`/`website_scan`);
+  ontbreken die (42P01) → `connected:false` + voorbeeld in de ECHTE kolom-vorm.
+  Volledige bron-documentatie (functions/tabellen/velden + waarom-niet-live) in de
+  bestandskop. Zelfde `supabase`-client als de rest → licht vanzelf op na de port.
+- **`src/hooks/useWebsite.js`** — hook per actieve tenant.
+- **`src/pages/WebsitePage.jsx`** — hero-status nu echt: `connected` → groene "Live",
+  anders gouden "Voorbeeld · nog niet gekoppeld" + eerlijke seam-balk die F2.7-B4
+  benoemt. "Bekijk site" opent nu het echte domein (toast + window.open).
+- **`src/design/blueprint.css`** — `.web-seam` + `.web-seam-bar` (scoped, gold).
+
+### Echt-werkt-of-seam
+**SEAM** (bewust, want cross-project live kan niet in deze stap). De seam is
+live-bedraad op het brein: zodra F2.7-B4 de tabellen port, wordt `connected:true`
+zonder code-wijziging. Tot dan: cijfers expliciet gelabeld als voorbeeld.
+
+### Poorten
+build groen · lint groen (0 errors) · test:knoppen GROEN op `/website` (47 knoppen)
++ defaults (111 knoppen, 4 routes) — geen regressie.
+
+---
+
 ## Stap 25: IST/SOLL/Bouwplan-widgets — nu uit het Design geport (2026-06-30)
 
 ### Aanleiding

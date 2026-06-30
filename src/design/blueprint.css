@@ -2241,6 +2241,11 @@ button.irisbrief-stat.is-link:hover .irisbrief-stat-go{opacity:1;transform:trans
 .web-hero{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh-sm);padding:16px 18px}
 .web-hero-main{display:flex;align-items:center;gap:14px}
 .web-live{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:13px;color:var(--a-green)}
+/* Website-databron-seam (nog niet geport naar het brein) — zie src/lib/website.js */
+.web-seam{display:inline-flex;align-items:center;gap:7px;font-weight:800;font-size:13px;color:var(--a-gold)}
+.web-seam-bar{display:flex;align-items:flex-start;gap:10px;font-size:11.5px;line-height:1.5;color:var(--a-gold);background:var(--a-gold-soft);border:1px solid var(--line);border-radius:var(--r-sm);padding:11px 14px;margin:0 0 14px}
+.web-seam-bar svg{width:16px;height:16px;flex:0 0 auto;margin-top:1px;color:var(--a-gold)}
+.web-seam-bar b{color:var(--ink)}
 .web-domein{font-size:14px;font-weight:700;color:var(--ink);text-decoration:none}
 .web-domein:hover{color:var(--a-teal);text-decoration:underline}
 .web-hero-acts{display:flex;gap:9px}
